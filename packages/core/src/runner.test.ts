@@ -31,7 +31,7 @@ const manifest: Manifest = {
   nodes: {
     a: {
       id: "a",
-      path: "a.sql.ts",
+      path: "a.sql",
       config: { materialized: "table" },
       sql: "select 1",
       deps: [],
@@ -41,7 +41,7 @@ const manifest: Manifest = {
     },
     b: {
       id: "b",
-      path: "b.sql.ts",
+      path: "b.sql",
       config: { materialized: "view" },
       sql: "select 2",
       deps: ["a"],

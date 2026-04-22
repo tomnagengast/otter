@@ -41,7 +41,7 @@ anchor inference on the `Config` type.
 | ----------- | ------------------------------- | --------- | ---------------------------------------------------------------------- |
 | `profiles`  | `Record<string, ProfileConfig>` | —         | Named target environments; one is selected per command via `--profile` |
 | `sources`   | `Record<string, SourceConfig>`  | —         | Named extraction inputs; empty `{}` if you do not use `otter load`     |
-| `modelsDir` | `string`                        | —         | Directory containing `.sql.ts` model files                             |
+| `modelsDir` | `string`                        | —         | Directory containing `.sql` model files                                |
 | `seedsDir`  | `string`                        | `"seeds"` | Directory containing seed CSV files (empty CSVs are tolerated)         |
 
 ## ProfileConfig

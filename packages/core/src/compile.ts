@@ -1,7 +1,7 @@
 import { Glob } from "bun";
 import type { Config } from "./config.ts";
 import { buildDag, type Dag, type DagNode, toposort } from "./dag.ts";
-import { type SqlFragment, withRecording } from "./sql.ts";
+import { compileTemplate } from "./template.ts";
 
 export interface Manifest {
   generated_at: string;
@@ -10,7 +10,7 @@ export interface Manifest {
 }
 
 export async function compileProject(config: Config, cwd: string): Promise<Manifest> {
-  const glob = new Glob("**/*.sql.ts");
+  const glob = new Glob("**/*.sql");
   const files: string[] = [];
   for await (const f of glob.scan(`${cwd}/${config.modelsDir}`)) files.push(f);
 
@@ -18,32 +18,23 @@ export async function compileProject(config: Config, cwd: string): Promise<Manif
   const seen = new Map<string, string>();
   for (const f of files) {
     const base = f.split("/").pop() ?? f;
-    const id = base.replace(/\.sql\.ts$/, "");
+    const id = base.replace(/\.sql$/, "");
     const prior = seen.get(id);
     if (prior !== undefined) {
       throw new Error(`duplicate model id "${id}": ${prior} and ${f}`);
     }
     seen.set(id, f);
-    const ctx = {
-      deps: new Set<string>(),
-      sources: new Set<string>(),
-      seeds: new Set<string>(),
-      currentModel: id,
-    };
-    const mod = await withRecording(ctx, async () => {
-      return (await import(`${cwd}/${config.modelsDir}/${f}`)) as {
-        default: SqlFragment;
-        config?: DagNode["config"];
-      };
-    });
+    const path = `${config.modelsDir}/${f}`;
+    const body = await Bun.file(`${cwd}/${path}`).text();
+    const compiled = compileTemplate(body, id);
     nodes.push({
       id,
-      path: `${config.modelsDir}/${f}`,
-      config: mod.config ?? { materialized: "view" },
-      sql: mod.default.__sql,
-      deps: [...ctx.deps],
-      sources: [...ctx.sources],
-      seeds: [...ctx.seeds],
+      path,
+      config: compiled.config,
+      sql: compiled.sql,
+      deps: [...compiled.deps],
+      sources: [...compiled.sources],
+      seeds: [...compiled.seeds],
     });
   }
 

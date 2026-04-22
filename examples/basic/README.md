@@ -30,7 +30,7 @@ into a unified analytics database, with staging models and a combined activity v
 │   stg_postgres_orders (view)                                                   │
 │   stg_clickhouse_events (view)                                                 │
 │                                                                                │
-│ models/                                                                        │
+│ mart/                                                                          │
 │   customers (table)             ← refs stg_postgres_customers                  │
 │   customer_order_counts (view)  ← refs customers + stg_postgres_orders         │
 │   customer_activity (table)     ← refs customers + orders + events             │
@@ -44,12 +44,13 @@ examples/basic/
 ├── otter.config.ts              # profiles + sources + models/seeds dirs
 ├── models/
 │   ├── staging/
-│   │   ├── stg_postgres_customers.sql.ts
-│   │   ├── stg_postgres_orders.sql.ts
-│   │   └── stg_clickhouse_events.sql.ts
-│   ├── customers.sql.ts
-│   ├── customer_order_counts.sql.ts
-│   └── customer_activity.sql.ts
+│   │   ├── stg_postgres_customers.sql
+│   │   ├── stg_postgres_orders.sql
+│   │   └── stg_clickhouse_events.sql
+│   ├── mart/
+│   │   ├── customers.sql
+│   │   ├── customer_order_counts.sql
+│   │   └── customer_activity.sql
 └── seeds/                       # (optional CSV seeds, not used in loader demo)
 ```
 
@@ -153,27 +154,26 @@ bun cli clean
    `@otter/source-clickhouse`), extracts rows, and writes them to
    `<target.schema>.raw_<source>_<stream>` via the target adapter.
 
-2. Staging models reference raw tables with the `source()` helper:
+2. Staging models reference raw tables with `{{ source(...) }}`:
 
-   ```ts
-   import { source, sql } from "@otter/core";
-   export default sql`select * from ${source("postgres", "customers")}`;
+   ```sql
+   select * from {{ source("postgres", "customers") }}
    ```
 
-   `source("postgres", "customers")` compiles to the identifier
+   `{{ source("postgres", "customers") }}` compiles to the identifier
    `"raw_postgres_customers"`. The postgres adapter sets `search_path` to the
    target schema during `execute`, so the unqualified identifier resolves to
    `analytics.raw_postgres_customers`.
 
-3. Downstream models reference compiled models with `ref()`. Model IDs are the
-   filename without the `.sql.ts` extension — subdirectories under `models/` are
+3. Downstream models reference compiled models with `{{ ref(...) }}`. Model IDs are the
+   filename without the `.sql` extension — subdirectories under `models/` are
    for organization and don't affect the ID:
 
-   ```ts
-   // models/staging/stg_postgres_customers.sql.ts
-   // → id: stg_postgres_customers
+   ```sql
+   -- models/staging/stg_postgres_customers.sql
+   -- → id: stg_postgres_customers
 
-   ref("stg_postgres_customers");
+   select * from {{ ref("stg_postgres_customers") }}
    ```
 
 4. `customer_activity` fans in `stg_postgres_orders` and `stg_clickhouse_events`

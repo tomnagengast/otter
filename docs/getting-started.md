@@ -41,12 +41,13 @@ export default defineConfig({
 });
 ```
 
-```typescript
-// models/stg_users.sql.ts
-import { source, sql } from "@otter/core";
+```sql
+-- models/stg_users.sql
+{{ config(
+  materialized: "table"
+) }}
 
-export const config = { materialized: "table" } as const;
-export default sql`select id, email, created_at from ${source("stripe_pg", "users")}`;
+select id, email, created_at from {{ source("stripe_pg", "users") }}
 ```
 
 Bun auto-loads any `.env` file in the project root, so drop `PG_URL` and `SOURCE_PG_URL` in

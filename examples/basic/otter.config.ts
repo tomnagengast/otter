@@ -22,4 +22,5 @@ export default defineConfig({
   },
   modelsDir: "models",
   seedsDir: "seeds",
+  sourcesDir: "sources",
 });

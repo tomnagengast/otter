@@ -43,7 +43,7 @@ test("readCompiledManifest returns the parsed manifest when present", async () =
     nodes: {
       customers: {
         id: "customers",
-        path: "models/customers.sql.ts",
+        path: "models/customers.sql",
         config: { materialized: "table" as const },
         sql: "select 1",
         compiled_sql: "select 1",

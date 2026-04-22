@@ -13,8 +13,10 @@ supports three: `view`, `table`, and `incremental`.
 
 ## `view`
 
-```typescript
-export const config = { materialized: "view" } as const;
+```sql
+{{ config(
+  materialized: "view"
+) }}
 ```
 
 The default. Executes `CREATE OR REPLACE VIEW "<schema>"."<model>" AS <compiled SQL>`. No staging,
@@ -27,8 +29,10 @@ Use for:
 
 ## `table`
 
-```typescript
-export const config = { materialized: "table" } as const;
+```sql
+{{ config(
+  materialized: "table"
+) }}
 ```
 
 Builds a staging table, then atomically swaps it into the final name:
@@ -46,11 +50,11 @@ Use for:
 
 ## `incremental`
 
-```typescript
-export const config = {
+```sql
+{{ config(
   materialized: "incremental",
-  unique_key: "event_id",
-} as const;
+  unique_key: "event_id"
+) }}
 ```
 
 Requires the adapter to implement `mergeIncremental`. If it does not, the build fails with
@@ -93,25 +97,32 @@ concurrent reader either sees the old table or the new table, never neither.
 
 ## Example
 
-```typescript
-// models/stg_events.sql.ts
-import { source, sql } from "@otter/core";
-export const config = { materialized: "table" } as const;
-export default sql`select * from ${source("events_ch", "events")}`;
+```sql
+-- models/stg_events.sql
+{{ config(
+  materialized: "table"
+) }}
+
+select * from {{ source("events_ch", "events") }}
 ```
 
-```typescript
-// models/fct_events.sql.ts
-import { ref, sql } from "@otter/core";
-export const config = { materialized: "incremental", unique_key: "event_id" } as const;
-export default sql`select event_id, user_id, occurred_at from ${ref("stg_events")}`;
+```sql
+-- models/fct_events.sql
+{{ config(
+  materialized: "incremental",
+  unique_key: "event_id"
+) }}
+
+select event_id, user_id, occurred_at from {{ ref("stg_events") }}
 ```
 
-```typescript
-// models/rpt_events.sql.ts
-import { ref, sql } from "@otter/core";
-export const config = { materialized: "view" } as const;
-export default sql`select user_id, count(*) as n from ${ref("fct_events")} group by user_id`;
+```sql
+-- models/rpt_events.sql
+{{ config(
+  materialized: "view"
+) }}
+
+select user_id, count(*) as n from {{ ref("fct_events") }} group by user_id
 ```
 
 Related: [models.md](models.md#model-api), [adapter-postgres.md](adapter-postgres.md),

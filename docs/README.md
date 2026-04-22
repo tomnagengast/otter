@@ -1,7 +1,7 @@
 # Otter Docs
 
 Otter is a Bun-native ELT tool for managing an analytics stack in TypeScript. Extract from
-ClickHouse or Postgres, load raw tables into a Postgres target, and run `.sql.ts` models as a DAG.
+ClickHouse or Postgres, load raw tables into a Postgres target, and run `.sql` models as a DAG.
 
 ## Getting Started
 

@@ -5,9 +5,20 @@ export interface CursorState {
   set(key: string, value: string): void;
 }
 
+export interface ExtractOpts {
+  /** Column to filter on / track the high-water mark for incremental loads. */
+  cursorField?: string;
+  /** Lower bound for the cursor when state has no prior value. */
+  initialValue?: string;
+  /** Optional upstream schema (e.g. postgres namespace). */
+  schema?: string;
+  /** Optional upstream identifier when it differs from `stream`. */
+  identifier?: string;
+}
+
 export interface Source {
   kind: string;
-  extract(stream: string, state: CursorState): AsyncIterable<Row[]>;
+  extract(stream: string, state: CursorState, opts?: ExtractOpts): AsyncIterable<Row[]>;
   close(): Promise<void>;
 }
 

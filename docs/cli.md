@@ -30,11 +30,11 @@ All commands resolve `otter.config.ts` from the current working directory.
 | Command               | Summary                                                     |
 | --------------------- | ----------------------------------------------------------- |
 | [`load`](#load)       | Extract from a source and load into the target's raw schema |
-| [`compile`](#compile) | Resolve refs/sources and emit `.otter/target/manifest.json` |
+| [`compile`](#compile) | Resolve refs/sources and emit manifest + per-model SQL      |
 | [`build`](#build)     | Execute the compiled DAG against the target                 |
 | [`list`](#list)       | Enumerate models, sources, or seeds                         |
 | [`show`](#show)       | Preview rows from a materialized model                      |
-| [`clean`](#clean)     | Remove `.otter/target/` artifacts                           |
+| [`clean`](#clean)     | Remove `.otter/target/` and `.otter/compiled/` artifacts    |
 
 ## load
 
@@ -65,8 +65,10 @@ per-driver behavior.
 otter compile [--profile <name>]
 ```
 
-Imports every `.sql.ts` file under `modelsDir`, records `ref` / `source` edges, and writes
-`.otter/target/manifest.json`. No target I/O.
+Reads every `.sql` file under `modelsDir`, records `ref` / `source` / `seed` edges, and writes
+`.otter/target/manifest.json` plus one rendered file per model under `.otter/compiled/`
+(mirroring the source path, e.g. `models/staging/stg_users.sql` →
+`.otter/compiled/models/staging/stg_users.sql`). No target I/O.
 
 ```bash
 otter compile
@@ -141,8 +143,8 @@ otter show stg_users --limit 20
 otter clean
 ```
 
-Removes `.otter/target/` (manifest, run results, events log). Preserves `.otter/state.db` so
-source cursors survive clean.
+Removes `.otter/target/` and `.otter/compiled/` (manifest, run results, events log, per-model
+compiled SQL). Preserves `.otter/state.db` so source cursors survive clean.
 
 ```bash
 otter clean

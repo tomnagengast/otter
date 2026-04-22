@@ -5,7 +5,7 @@ import { parseSelector } from "./parse.ts";
 
 const n = (id: string, deps: string[] = [], tags: string[] = []): DagNode => ({
   id,
-  path: `${id}.sql.ts`,
+  path: `${id}.sql`,
   config: { materialized: "view", tags },
   sql: "",
   deps,

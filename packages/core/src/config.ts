@@ -21,6 +21,7 @@ export interface Config {
   sources: Record<string, SourceConfig>;
   modelsDir: string;
   seedsDir?: string;
+  sourcesDir?: string;
 }
 
 export function defineConfig(config: Config): Config {

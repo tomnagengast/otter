@@ -1,27 +1,18 @@
 import { expect, test } from "bun:test";
 import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { compileProject } from "./compile.ts";
 import { defineConfig } from "./config.ts";
 
-// Use a tmpdir inside the workspace root so Bun can resolve workspace packages via node_modules.
-const WORKSPACE_ROOT = new URL("../../../", import.meta.url).pathname;
-
 test("compiles a two-model project and records ref edge", async () => {
-  const dir = mkdtempSync(join(WORKSPACE_ROOT, "otter-test-"));
+  const dir = mkdtempSync(join(tmpdir(), "otter-test-"));
   try {
     mkdirSync(`${dir}/models`);
+    writeFileSync(`${dir}/models/a.sql`, `{{ config(materialized: "table") }}\nselect 1\n`);
     writeFileSync(
-      `${dir}/models/a.sql.ts`,
-      `import { sql } from "@otter/core"; export const config = { materialized: "table" } as const; export default sql\`select 1\`;`,
-    );
-    writeFileSync(
-      `${dir}/models/b.sql.ts`,
-      `import { sql, ref } from "@otter/core"; export const config = { materialized: "view" } as const; export default sql\`select * from \${ref("a")}\`;`,
-    );
-    writeFileSync(
-      `${dir}/otter.config.ts`,
-      `import { defineConfig } from "@otter/core"; export default defineConfig({ profiles: { dev: { target: { kind: "postgres", url: "" } } }, sources: {}, modelsDir: "models" });`,
+      `${dir}/models/b.sql`,
+      `{{ config(materialized: "view") }}\nselect * from {{ ref("a") }}\n`,
     );
 
     const config = defineConfig({
@@ -36,6 +27,68 @@ test("compiles a two-model project and records ref edge", async () => {
     const nodeBDefined = nodeB as NonNullable<typeof nodeB>;
     expect(nodeBDefined.deps).toEqual(["a"]);
     expect(nodeBDefined.compiled_sql).toContain(`"a"`);
+    expect(nodeBDefined.compiled_sql).not.toContain("{{");
+  } finally {
+    rmSync(dir, { recursive: true });
+  }
+});
+
+test("defaults to materialized: view when config block is omitted", async () => {
+  const dir = mkdtempSync(join(tmpdir(), "otter-test-"));
+  try {
+    mkdirSync(`${dir}/models`);
+    writeFileSync(`${dir}/models/a.sql`, `select 1\n`);
+    const config = defineConfig({
+      profiles: { dev: { target: { kind: "postgres", url: "" } } },
+      sources: {},
+      modelsDir: "models",
+    });
+    const manifest = await compileProject(config, dir);
+    expect(manifest.nodes.a?.config.materialized).toBe("view");
+  } finally {
+    rmSync(dir, { recursive: true });
+  }
+});
+
+test("records source() dependency as sourceName.stream", async () => {
+  const dir = mkdtempSync(join(tmpdir(), "otter-test-"));
+  try {
+    mkdirSync(`${dir}/models`);
+    writeFileSync(
+      `${dir}/models/s.sql`,
+      `{{ config(materialized: "view") }}\nselect * from {{ source("stripe_pg", "charges") }}\n`,
+    );
+    const config = defineConfig({
+      profiles: { dev: { target: { kind: "postgres", url: "" } } },
+      sources: {},
+      modelsDir: "models",
+    });
+    const manifest = await compileProject(config, dir);
+    expect(manifest.nodes.s?.sources).toEqual(["stripe_pg.charges"]);
+    expect(manifest.nodes.s?.compiled_sql).toContain(`"raw_stripe_pg_charges"`);
+  } finally {
+    rmSync(dir, { recursive: true });
+  }
+});
+
+test("preserves tags and unique_key from config block", async () => {
+  const dir = mkdtempSync(join(tmpdir(), "otter-test-"));
+  try {
+    mkdirSync(`${dir}/models`);
+    writeFileSync(
+      `${dir}/models/fct.sql`,
+      `{{ config(materialized: "incremental", unique_key: "id", tags: ["nightly"]) }}\nselect 1 as id\n`,
+    );
+    const config = defineConfig({
+      profiles: { dev: { target: { kind: "postgres", url: "" } } },
+      sources: {},
+      modelsDir: "models",
+    });
+    const manifest = await compileProject(config, dir);
+    const node = manifest.nodes.fct;
+    expect(node?.config.materialized).toBe("incremental");
+    expect(node?.config.unique_key).toBe("id");
+    expect(node?.config.tags).toEqual(["nightly"]);
   } finally {
     rmSync(dir, { recursive: true });
   }

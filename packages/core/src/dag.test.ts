@@ -3,7 +3,7 @@ import { buildDag, type DagNode, toposort } from "./dag.ts";
 
 const n = (id: string, deps: string[] = []): DagNode => ({
   id,
-  path: `${id}.sql.ts`,
+  path: `${id}.sql`,
   config: { materialized: "view" },
   sql: "select 1",
   deps,

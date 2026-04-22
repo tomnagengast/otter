@@ -16,7 +16,7 @@ test("writeManifest creates parent directories and round-trips the manifest", as
     nodes: {
       customers: {
         id: "customers",
-        path: "models/customers.sql.ts",
+        path: "models/customers.sql",
         config: { materialized: "table" as const },
         sql: "select 1",
         compiled_sql: "select 1",
