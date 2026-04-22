@@ -8,11 +8,11 @@ tables from `otter load`. It uses `Bun.sql` under the hood — no `pg` or `postg
 Select the Postgres adapter by setting `profiles.<name>.target.kind = "postgres"` in
 `otter.config.ts` (see [configuration.md](configuration.md#targetconfig)).
 
-| Field    | Type         | Default  | Description                                                      |
-| -------- | ------------ | -------- | ---------------------------------------------------------------- |
-| `kind`   | `"postgres"` | —        | Driver discriminant                                              |
-| `url`    | `string`     | —        | Postgres connection string (`postgres://user:pass@host:port/db`) |
-| `schema` | `string`     | `public` | Default schema for materialized models and raw tables            |
+| Field    | Type         | Default   | Description                                                                                                          |
+| -------- | ------------ | --------- | -------------------------------------------------------------------------------------------------------------------- |
+| `kind`   | `"postgres"` | —         | Driver discriminant                                                                                                  |
+| `url`    | `string`     | —         | Postgres connection string (`postgres://user:pass@host:port/db`)                                                     |
+| `schema` | `string`     | see below | Target schema. The CLI defaults to `analytics` for `otter build`/`otter show` and `raw` for `otter load` when unset. |
 
 The adapter appends `options=-c search_path=<schema>` to the URL so bare identifiers from `ref`,
 `source`, and `seed` resolve against the configured schema automatically.
@@ -32,7 +32,7 @@ See [load-strategies.md](load-strategies.md) for semantics and cross-adapter com
 | Materialization | Strategy                                                                                                     |
 | --------------- | ------------------------------------------------------------------------------------------------------------ |
 | `view`          | `CREATE OR REPLACE VIEW <schema>.<model>`                                                                    |
-| `table`         | `CREATE TABLE <schema>.<model>_tmp` → swap into `<schema>.<model>` in a transaction                          |
+| `table`         | `CREATE TABLE <schema>.<model>__stg` → swap into `<schema>.<model>` in a transaction                         |
 | `incremental`   | Build staging table from compiled SQL; `INSERT ... ON CONFLICT DO UPDATE` into the final table; drop staging |
 
 Swap uses `DROP TABLE IF EXISTS` + `ALTER TABLE ... RENAME TO` inside a single transaction, so

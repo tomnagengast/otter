@@ -36,15 +36,35 @@ otter load stripe_pg.billing.invoices  # billing.invoices
 
 ## Extract Behavior
 
+- Column types are pulled from `information_schema.columns` up front so the target `CREATE TABLE`
+  uses real Postgres types instead of `text`.
 - Batched extraction via `Bun.sql` in pages of 5 000 rows.
-- `select * from <schema>.<table> order by 1 limit 5000 offset <n>` per page.
-- Streams rows as `AsyncGenerator<Row[]>`, so `otter load` processes one batch at a time.
+- Without a cursor: `select * from <schema>.<table> order by 1 limit 5000 offset <n>`.
+- With a cursor: `select * from <schema>.<table> where <cursor_field> > <cursor> order by <cursor_field> asc limit 5000`.
 
 ## Incremental
 
-For incremental models sourced from a Postgres raw table, otter reads the target's current
-`max(<cursor>)` at runtime and filters the staging build to rows strictly greater. See
-[materializations.md](materializations.md#incremental) for the user-facing contract.
+Declare an incremental cursor per stream in `sources/<name>.ts`:
+
+```typescript
+// sources/stripe_pg.ts
+import { defineSource } from "@otter/core";
+
+export default defineSource({
+  streams: {
+    users: {
+      write_disposition: "merge",
+      primary_key: "id",
+      incremental: { cursor_field: "updated_at" },
+    },
+  },
+});
+```
+
+The driver reads the high-water mark from `.otter/state.db` (key `<stream>:<cursor_field>`),
+filters with `where <cursor_field> > <cursor>`, and writes the last value back after each batch.
+Pass `--full-refresh` to `otter load` to clear the cursor before extract. See
+[state.md](state.md#cursors).
 
 ## Example
 

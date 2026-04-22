@@ -37,12 +37,13 @@ anchor inference on the `Config` type.
 
 ## Config Fields
 
-| Field       | Type                            | Default   | Description                                                            |
-| ----------- | ------------------------------- | --------- | ---------------------------------------------------------------------- |
-| `profiles`  | `Record<string, ProfileConfig>` | —         | Named target environments; one is selected per command via `--profile` |
-| `sources`   | `Record<string, SourceConfig>`  | —         | Named extraction inputs; empty `{}` if you do not use `otter load`     |
-| `modelsDir` | `string`                        | —         | Directory containing `.sql` model files                                |
-| `seedsDir`  | `string`                        | `"seeds"` | Directory containing seed CSV files (empty CSVs are tolerated)         |
+| Field        | Type                            | Default     | Description                                                                                                                      |
+| ------------ | ------------------------------- | ----------- | -------------------------------------------------------------------------------------------------------------------------------- |
+| `profiles`   | `Record<string, ProfileConfig>` | —           | Named target environments; one is selected per command via `--profile`                                                           |
+| `sources`    | `Record<string, SourceConfig>`  | —           | Named extraction inputs; empty `{}` if you do not use `otter load`                                                               |
+| `modelsDir`  | `string`                        | —           | Directory containing `.sql` model files                                                                                          |
+| `seedsDir`   | `string`                        | `"seeds"`   | Directory containing seed CSV files (empty CSVs are tolerated)                                                                   |
+| `sourcesDir` | `string`                        | `"sources"` | Directory containing `defineSource()` `.ts` files that declare streams (`write_disposition`, `primary_key`, `incremental`, etc.) |
 
 ## ProfileConfig
 

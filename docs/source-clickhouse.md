@@ -35,9 +35,12 @@ otter load events_ch.logs.app_errors   # quoted as `logs`.`app_errors`
 
 ## Extract Behavior
 
+- `DESCRIBE TABLE` is run first so the target `CREATE TABLE` uses real Postgres types instead of
+  `text` (ClickHouse types are mapped: `Int64`/`UInt64` → `bigint`, `Float64` → `double precision`,
+  `DateTime*` → `timestamptz`, etc.).
 - HTTP `POST` to the ClickHouse endpoint with `default_format=JSONEachRow` appended to the query
   string.
-- Body: `SELECT * FROM <quoted-stream> FORMAT JSONEachRow`.
+- Body: `SELECT * FROM <quoted-stream>[ WHERE <cursor_field> > <cursor>][ ORDER BY <cursor_field> ASC] FORMAT JSONEachRow`.
 - Response body is read as a stream; each newline-delimited JSON line is parsed into a `Row` and
   buffered into 5 000-row batches.
 - `AsyncIterable<Row[]>` is yielded to `otter load` batch by batch.
@@ -51,9 +54,25 @@ before base64 encoding.
 
 ## Pagination and Cursors
 
-The current driver streams the full result set in one HTTP request — there is no cursor-based
-pagination today. `CursorState` is passed through but unused. For large tables, combine
-incremental models with a `WHERE` clause in your model SQL.
+The driver streams the full result set in one HTTP request rather than paginating. When a stream
+declares `incremental.cursor_field` in `sources/<name>.ts`, the SQL is rewritten with
+`WHERE <cursor_field> > <cursor> ORDER BY <cursor_field> ASC`, and the max value seen in the
+response is written back to `.otter/state.db` after the stream drains. Pass `--full-refresh` to
+`otter load` to clear the cursor.
+
+```typescript
+// sources/events_ch.ts
+import { defineSource } from "@otter/core";
+
+export default defineSource({
+  streams: {
+    events: {
+      write_disposition: "append",
+      incremental: { cursor_field: "event_time" },
+    },
+  },
+});
+```
 
 See [models.md](models.md#model-api) for incremental model config and
 [materializations.md](materializations.md#incremental) for the adapter-side merge flow.
