@@ -4,6 +4,12 @@
   "workspaces": {
     "": {
       "name": "@otter/otter",
+      "dependencies": {
+        "@otter/adapter-postgres": "workspace:*",
+        "@otter/source-clickhouse": "workspace:*",
+        "@otter/source-postgres": "workspace:*",
+        "@otter/source-stripe": "workspace:*",
+      },
       "devDependencies": {
         "@biomejs/biome": "^2.4.12",
         "@j178/prek": "^0.3.10",
@@ -17,6 +23,7 @@
     },
     "packages/adapter-postgres": {
       "name": "@otter/adapter-postgres",
+      "version": "0.1.0",
       "dependencies": {
         "@otter/core": "workspace:*",
       },
@@ -29,7 +36,7 @@
     },
     "packages/cli": {
       "name": "@otter/cli",
-      "version": "0.0.0",
+      "version": "0.1.0",
       "bin": {
         "otter": "./src/bin.ts",
       },
@@ -46,6 +53,7 @@
     },
     "packages/core": {
       "name": "@otter/core",
+      "version": "0.1.0",
       "devDependencies": {
         "@types/bun": "latest",
       },
@@ -55,6 +63,7 @@
     },
     "packages/source-clickhouse": {
       "name": "@otter/source-clickhouse",
+      "version": "0.1.0",
       "dependencies": {
         "@otter/core": "workspace:*",
       },
@@ -67,6 +76,20 @@
     },
     "packages/source-postgres": {
       "name": "@otter/source-postgres",
+      "version": "0.1.0",
+      "dependencies": {
+        "@otter/core": "workspace:*",
+      },
+      "devDependencies": {
+        "@types/bun": "latest",
+      },
+      "peerDependencies": {
+        "typescript": "^5",
+      },
+    },
+    "packages/source-stripe": {
+      "name": "@otter/source-stripe",
+      "version": "0.1.0",
       "dependencies": {
         "@otter/core": "workspace:*",
       },
@@ -140,6 +163,8 @@
     "@otter/source-clickhouse": ["@otter/source-clickhouse@workspace:packages/source-clickhouse"],
 
     "@otter/source-postgres": ["@otter/source-postgres@workspace:packages/source-postgres"],
+
+    "@otter/source-stripe": ["@otter/source-stripe@workspace:packages/source-stripe"],
 
     "@types/bun": ["@types/bun@1.3.12", "", { "dependencies": { "bun-types": "1.3.12" } }, "sha512-DBv81elK+/VSwXHDlnH3Qduw+KxkTIWi7TXkAeh24zpi5l0B2kUg9Ga3tb4nJaPcOFswflgi/yAvMVBPrxMB+A=="],
 

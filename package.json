@@ -31,7 +31,12 @@
   "peerDependencies": {
     "typescript": "^5"
   },
-  "dependencies": {},
+  "dependencies": {
+    "@otter/adapter-postgres": "workspace:*",
+    "@otter/source-clickhouse": "workspace:*",
+    "@otter/source-postgres": "workspace:*",
+    "@otter/source-stripe": "workspace:*"
+  },
   "devDependencies": {
     "@biomejs/biome": "^2.4.12",
     "@j178/prek": "^0.3.10",

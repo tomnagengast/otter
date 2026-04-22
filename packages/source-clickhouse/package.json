@@ -1,8 +1,8 @@
 {
   "name": "@otter/source-clickhouse",
+  "version": "0.1.0",
   "module": "src/index.ts",
   "type": "module",
-  "private": true,
   "dependencies": {
     "@otter/core": "workspace:*"
   },
