@@ -1,9 +1,17 @@
-import type { CursorState, ExtractOpts, ExtractStream, Row, Source } from "@otter/core";
+import type {
+  CursorState,
+  ExtractOpts,
+  ExtractStream,
+  Row,
+  Source,
+  SourceConfig,
+} from "@otter/core";
 import { SQL } from "bun";
 
 const BATCH = 5000;
 
-export function createSource(config: { url: string }): Source {
+export function createSource(config: SourceConfig): Source {
+  if (!config.url) throw new Error("source-postgres: config.url is required");
   const sql = new SQL(config.url);
   return {
     kind: "postgres",

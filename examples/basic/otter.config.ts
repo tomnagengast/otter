@@ -19,6 +19,10 @@ export default defineConfig({
       kind: "clickhouse",
       url: process.env.CLICKHOUSE_URL ?? "http://otter:otter@localhost:8123",
     },
+    stripe: {
+      kind: "stripe",
+      options: { apiKey: process.env.STRIPE_API_KEY },
+    },
   },
   modelsDir: "models",
   seedsDir: "seeds",

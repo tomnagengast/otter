@@ -1,3 +1,5 @@
+import type { SourceConfig } from "./config.ts";
+
 export type Row = Record<string, unknown>;
 
 export interface CursorState {
@@ -29,7 +31,7 @@ export interface Source {
 }
 
 export async function resolveSource(kind: string): Promise<{
-  createSource: (config: { url: string }) => Source;
+  createSource: (config: SourceConfig) => Source;
 }> {
   return import(`@otter/source-${kind}`);
 }

@@ -1,5 +1,5 @@
 export type TargetKind = "postgres";
-export type SourceKind = "postgres" | "clickhouse";
+export type SourceKind = "postgres" | "clickhouse" | "stripe" | (string & {});
 
 export interface TargetConfig {
   kind: TargetKind;
@@ -9,7 +9,10 @@ export interface TargetConfig {
 
 export interface SourceConfig {
   kind: SourceKind;
-  url: string;
+  /** Connection string. Optional for API-style sources that authenticate via `options`. */
+  url?: string;
+  /** Driver-specific options (e.g. API keys, pagination sizes). */
+  options?: Record<string, unknown>;
 }
 
 export interface ProfileConfig {

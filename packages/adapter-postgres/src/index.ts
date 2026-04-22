@@ -108,12 +108,12 @@ export function createAdapter(config: { url: string; schema?: string }): Adapter
     async swap(staging, final) {
       const previous = { schema: final.schema, name: `${final.name}__old__otter` };
       await sql.begin(async (tx) => {
-        await tx.unsafe(`drop table if exists ${qualify(previous)}`);
+        await tx.unsafe(`drop table if exists ${qualify(previous)} cascade`);
         await tx.unsafe(
           `alter table if exists ${qualify(final)} rename to ${quote(previous.name)}`,
         );
         await tx.unsafe(`alter table ${qualify(staging)} rename to ${quote(final.name)}`);
-        await tx.unsafe(`drop table if exists ${qualify(previous)}`);
+        await tx.unsafe(`drop table if exists ${qualify(previous)} cascade`);
       });
     },
     async mergeIncremental(opts: MergeIncrementalOpts) {

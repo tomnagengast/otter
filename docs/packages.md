@@ -12,6 +12,7 @@ on `@otter/core` for types and runtime plumbing.
 | `@otter/adapter-postgres`  | Postgres target adapter (`Bun.sql`)                    | [adapter-postgres.md](adapter-postgres.md)   |
 | `@otter/source-postgres`   | Postgres source (paginated extract)                    | [source-postgres.md](source-postgres.md)     |
 | `@otter/source-clickhouse` | ClickHouse source (HTTP streaming, `JSONEachRow`)      | [source-clickhouse.md](source-clickhouse.md) |
+| `@otter/source-stripe`     | Stripe source (REST list pagination, `created` cursor) | [source-stripe.md](source-stripe.md)         |
 
 ## Installation
 

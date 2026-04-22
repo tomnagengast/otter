@@ -30,6 +30,7 @@ ClickHouse or Postgres, load raw tables into a Postgres target, and run `.sql` m
 - [sources.md](sources.md) — `Source` interface and driver resolution.
 - [source-postgres.md](source-postgres.md) — Postgres source driver.
 - [source-clickhouse.md](source-clickhouse.md) — ClickHouse source driver.
+- [source-stripe.md](source-stripe.md) — Stripe API source driver.
 
 **Adapters**
 

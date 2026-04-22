@@ -54,6 +54,9 @@ export async function runBuild(opts: RunBuildOpts): Promise<{
         });
       } else {
         await opts.adapter.execute(
+          `drop table if exists "${staging.schema}"."${staging.name}" cascade`,
+        );
+        await opts.adapter.execute(
           `create table "${staging.schema}"."${staging.name}" as ${node.sql}`,
         );
         await opts.adapter.swap(staging, final);

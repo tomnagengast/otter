@@ -59,14 +59,17 @@ Profiles are selected per-command with `--profile <name>` (default `dev`). See
 
 ```typescript
 interface SourceConfig {
-  kind: "postgres" | "clickhouse";
-  url: string;
+  kind: "postgres" | "clickhouse" | "stripe" | string;
+  url?: string;
+  options?: Record<string, unknown>;
 }
 ```
 
-`kind` determines which source driver is loaded via `await import("@otter/source-" + kind)`. See
-[sources.md](sources.md) and the per-driver pages
-([source-postgres.md](source-postgres.md), [source-clickhouse.md](source-clickhouse.md)).
+`kind` determines which source driver is loaded via `await import("@otter/source-" + kind)`.
+Connection-string drivers (Postgres, ClickHouse) read `url`; API-style drivers (Stripe) read
+`options`. See [sources.md](sources.md) and the per-driver pages
+([source-postgres.md](source-postgres.md), [source-clickhouse.md](source-clickhouse.md),
+[source-stripe.md](source-stripe.md)).
 
 ## TargetConfig
 

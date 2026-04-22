@@ -1,6 +1,8 @@
-import type { Row, Source } from "@otter/core";
+import type { Row, Source, SourceConfig } from "@otter/core";
 
-export function createSource(config: { url: string }): Source {
+export function createSource(config: SourceConfig): Source {
+  if (!config.url) throw new Error("source-clickhouse: config.url is required");
+  const url = config.url;
   return {
     kind: "clickhouse",
     async extract(stream, state, opts) {
@@ -10,7 +12,7 @@ export function createSource(config: { url: string }): Source {
       const key = cursorField ? `${stream}:${cursorField}` : "";
       const cursor = cursorField ? (state.get(key) ?? opts?.initialValue) : undefined;
 
-      const u = new URL(config.url);
+      const u = new URL(url);
       const headers = new Headers();
       if (u.username || u.password) {
         headers.set(

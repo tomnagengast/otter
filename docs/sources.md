@@ -42,10 +42,11 @@ const mod = await import(`@otter/source-${kind}`);
 const source = mod.createSource(config.sources[name]);
 ```
 
-Today otter ships two driver packages:
+Today otter ships three driver packages:
 
 - [source-postgres.md](source-postgres.md) — `@otter/source-postgres`
 - [source-clickhouse.md](source-clickhouse.md) — `@otter/source-clickhouse`
+- [source-stripe.md](source-stripe.md) — `@otter/source-stripe`
 
 Any package that matches the `@otter/source-<kind>` naming convention and exports
 `createSource` will resolve at runtime.
@@ -63,7 +64,8 @@ See [state.md](state.md#cursors) for the on-disk schema.
 ## Adding a Source Driver
 
 1. Create a new workspace package named `@otter/source-<kind>`.
-2. Export a `createSource(config: { url: string })` function returning a `Source`.
+2. Export a `createSource(config: SourceConfig)` function returning a `Source`. Read
+   `config.url` for connection-string sources or `config.options` for API-style sources.
 3. Add the package to the workspace `packages/` directory; `bun install` will link it.
 
 Users can then declare:
@@ -71,10 +73,12 @@ Users can then declare:
 ```typescript
 sources: {
   my_thing: { kind: "<kind>", url: process.env.MY_THING_URL ?? "" },
+  my_api:   { kind: "<kind>", options: { apiKey: process.env.MY_API_KEY } },
 }
 ```
 
 and run `otter load my_thing.<stream>`.
 
 Related: [source-postgres.md](source-postgres.md), [source-clickhouse.md](source-clickhouse.md),
-[cli.md](cli.md#load), [packages.md](packages.md#package-map).
+[source-stripe.md](source-stripe.md), [cli.md](cli.md#load),
+[packages.md](packages.md#package-map).

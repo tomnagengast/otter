@@ -6,7 +6,7 @@ const skip = !url;
 
 test.skipIf(skip)("extracts rows from a postgres table in batches", async () => {
   // biome-ignore lint/style/noNonNullAssertion: test is skipped when url is undefined
-  const source = createSource({ url: url! });
+  const source = createSource({ kind: "postgres", url: url! });
   // information_schema.schemata always exists in Postgres
   const batches: Record<string, unknown>[][] = [];
   const { columnTypes, rows } = await source.extract("information_schema.schemata", {

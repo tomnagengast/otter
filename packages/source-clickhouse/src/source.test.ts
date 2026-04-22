@@ -21,7 +21,10 @@ test("extract forwards URL credentials as basic auth", async () => {
   });
 
   try {
-    const src = createSource({ url: `http://otter:secret@127.0.0.1:${server.port}` });
+    const src = createSource({
+      kind: "clickhouse",
+      url: `http://otter:secret@127.0.0.1:${server.port}`,
+    });
     const batches: Record<string, unknown>[][] = [];
     const noop = { get: () => undefined, set: () => {} };
 
@@ -43,7 +46,7 @@ test("extract forwards URL credentials as basic auth", async () => {
 
 test.skipIf(skip)("streams rows from a known clickhouse table", async () => {
   // biome-ignore lint/style/noNonNullAssertion: guarded by skip above
-  const src = createSource({ url: url! });
+  const src = createSource({ kind: "clickhouse", url: url! });
   let total = 0;
   const noop = { get: () => undefined, set: () => {} };
   const { rows } = await src.extract("system.numbers", noop);
