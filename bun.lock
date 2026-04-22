@@ -4,6 +4,12 @@
   "workspaces": {
     "": {
       "name": "@otter/otter",
+      "dependencies": {
+        "@otter/adapter-postgres": "workspace:*",
+        "@otter/source-clickhouse": "workspace:*",
+        "@otter/source-postgres": "workspace:*",
+        "@otter/source-stripe": "workspace:*",
+      },
       "devDependencies": {
         "@biomejs/biome": "^2.4.12",
         "@j178/prek": "^0.3.10",
@@ -15,8 +21,78 @@
         "typescript": "^5",
       },
     },
+    "packages/adapter-postgres": {
+      "name": "@otter/adapter-postgres",
+      "version": "0.1.0",
+      "dependencies": {
+        "@otter/core": "workspace:*",
+      },
+      "devDependencies": {
+        "@types/bun": "latest",
+      },
+      "peerDependencies": {
+        "typescript": "^5",
+      },
+    },
     "packages/cli": {
       "name": "@otter/cli",
+      "version": "0.1.0",
+      "bin": {
+        "otter": "./src/bin.ts",
+      },
+      "dependencies": {
+        "@otter/core": "workspace:*",
+        "chalk": "^5.6.2",
+      },
+      "devDependencies": {
+        "@types/bun": "latest",
+      },
+      "peerDependencies": {
+        "typescript": "^5",
+      },
+    },
+    "packages/core": {
+      "name": "@otter/core",
+      "version": "0.1.0",
+      "devDependencies": {
+        "@types/bun": "latest",
+      },
+      "peerDependencies": {
+        "typescript": "^5",
+      },
+    },
+    "packages/source-clickhouse": {
+      "name": "@otter/source-clickhouse",
+      "version": "0.1.0",
+      "dependencies": {
+        "@otter/core": "workspace:*",
+      },
+      "devDependencies": {
+        "@types/bun": "latest",
+      },
+      "peerDependencies": {
+        "typescript": "^5",
+      },
+    },
+    "packages/source-postgres": {
+      "name": "@otter/source-postgres",
+      "version": "0.1.0",
+      "dependencies": {
+        "@otter/core": "workspace:*",
+      },
+      "devDependencies": {
+        "@types/bun": "latest",
+      },
+      "peerDependencies": {
+        "typescript": "^5",
+      },
+    },
+    "packages/source-stripe": {
+      "name": "@otter/source-stripe",
+      "version": "0.1.0",
+      "dependencies": {
+        "@otter/core": "workspace:*",
+      },
       "devDependencies": {
         "@types/bun": "latest",
       },
@@ -78,7 +154,17 @@
 
     "@j178/prek-win32-x64-msvc": ["@j178/prek-win32-x64-msvc@0.3.10", "", { "os": "win32", "cpu": "x64" }, "sha512-Ln1/nrk3R+wnxbqP8xELI4xb4Aw49Pd8MlEDKnEnxc0cVChZlO3oHac5Mgm8DHXtMzKT8l0NBOVT1PG29RA7Rw=="],
 
+    "@otter/adapter-postgres": ["@otter/adapter-postgres@workspace:packages/adapter-postgres"],
+
     "@otter/cli": ["@otter/cli@workspace:packages/cli"],
+
+    "@otter/core": ["@otter/core@workspace:packages/core"],
+
+    "@otter/source-clickhouse": ["@otter/source-clickhouse@workspace:packages/source-clickhouse"],
+
+    "@otter/source-postgres": ["@otter/source-postgres@workspace:packages/source-postgres"],
+
+    "@otter/source-stripe": ["@otter/source-stripe@workspace:packages/source-stripe"],
 
     "@types/bun": ["@types/bun@1.3.12", "", { "dependencies": { "bun-types": "1.3.12" } }, "sha512-DBv81elK+/VSwXHDlnH3Qduw+KxkTIWi7TXkAeh24zpi5l0B2kUg9Ga3tb4nJaPcOFswflgi/yAvMVBPrxMB+A=="],
 
@@ -101,6 +187,8 @@
     "@typescript/native-preview-win32-x64": ["@typescript/native-preview-win32-x64@7.0.0-dev.20260422.1", "", { "os": "win32", "cpu": "x64" }, "sha512-VQbDQlp1bjV5nnHagQLXQAhid3S48l1OToIBjvqlw18s0V0YSgoyNL6E/rE7FBdkGrTLf/rtKjo42IZnt3tvqA=="],
 
     "bun-types": ["bun-types@1.3.12", "", { "dependencies": { "@types/node": "*" } }, "sha512-HqOLj5PoFajAQciOMRiIZGNoKxDJSr6qigAttOX40vJuSp6DN/CxWp9s3C1Xwm4oH7ybueITwiaOcWXoYVoRkA=="],
+
+    "chalk": ["chalk@5.6.2", "", {}, "sha512-7NzBL0rN6fMUW+f7A6Io4h40qQlG+xGmtMxfbnH/K7TAtt8JQWVQK+6g0UXKMeVJoyV5EkkNsErQ8pVD3bLHbA=="],
 
     "prettier": ["prettier@3.8.3", "", { "bin": { "prettier": "bin/prettier.cjs" } }, "sha512-7igPTM53cGHMW8xWuVTydi2KO233VFiTNyF5hLJqpilHfmn8C8gPf+PS7dUT64YcXFbiMGZxS9pCSxL/Dxm/Jw=="],
 

@@ -1,0 +1,8 @@
+{
+  "name": "@otter/example",
+  "private": true,
+  "packageManager": "bun@1.3.11",
+  "scripts": {
+    "cli": "bun ../../packages/cli/src/bin.ts"
+  }
+}
