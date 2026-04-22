@@ -1,21 +1,39 @@
 # @otter/source-stripe
 
-Stripe API source for Otter. Paginates `v1/<resource>` list endpoints, tracks an incremental
-cursor on `created`, and lands top-level scalars as typed Postgres columns with nested
-objects/arrays as `jsonb`.
+Stripe API source for [Otter](https://github.com/tomnagengast/otter). Implements the `Source`
+interface from [`@otter/core`](https://jsr.io/@otter/core). Paginates `v1/<resource>` list
+endpoints, tracks an incremental cursor on `created`, and lands top-level scalars as typed
+Postgres columns with nested objects/arrays as `jsonb`.
+
+## Install
+
+```bash
+# Bun
+bunx jsr add @otter/source-stripe
+
+# Deno
+deno add jsr:@otter/source-stripe
+```
+
+You rarely import this package directly — the CLI resolves it via
+`await import("@otter/source-stripe")` when you declare a source with `kind: "stripe"`.
 
 ## Configuration
 
 ```typescript
-// otter.config.ts (excerpt)
-sources: {
-  stripe: {
-    kind: "stripe",
-    options: {
-      apiKey: process.env.STRIPE_API_KEY,
+// otter.config.ts
+import { defineConfig } from "@otter/core";
+
+export default defineConfig({
+  profiles: { dev: { target: { kind: "postgres", url: process.env.PG_URL ?? "" } } },
+  sources: {
+    stripe: {
+      kind: "stripe",
+      options: { apiKey: process.env.STRIPE_API_KEY },
     },
   },
-},
+  modelsDir: "models",
+});
 ```
 
 | Option          | Type     | Default                  | Description                             |
@@ -79,5 +97,20 @@ streams: {
 `cursor_field` defaults to `created` when not set. State stores a unix timestamp; the next run
 sends `created[gt]=<cursor>`.
 
-Related: [docs/source-stripe.md](../../docs/source-stripe.md),
-[docs/sources.md](../../docs/sources.md).
+## Example
+
+```bash
+otter load stripe.customers --strategy merge --unique-key id
+otter load stripe.charges   --full-refresh
+```
+
+## Full documentation
+
+- Driver reference —
+  [source-stripe](https://github.com/tomnagengast/otter/blob/main/docs/source-stripe.md)
+- Interface — [sources](https://github.com/tomnagengast/otter/blob/main/docs/sources.md)
+- `otter load` CLI — [cli#load](https://github.com/tomnagengast/otter/blob/main/docs/cli.md#load)
+
+## License
+
+MIT
