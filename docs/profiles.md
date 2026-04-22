@@ -1,24 +1,26 @@
 # Profiles
 
-A profile is a named target environment. Every otter command selects a profile, loads its
-`TargetConfig`, and runs against that adapter.
+A profile is a named target environment. Every otter command selects a profile and runs against
+its adapter.
 
 ## Declaring Profiles
 
 Profiles are declared under `config.profiles` in `otter.config.ts`. Each key is a profile name and
-each value is a `ProfileConfig` whose only field today is `target`.
+each value is a `ProfileConfig` whose only field today is `target` — an `Adapter` produced by a
+factory from an `@otter/adapter-*` package.
 
 ```typescript
 // otter.config.ts
+import { postgresAdapter } from "@otter/adapter-postgres";
 import { defineConfig } from "@otter/core";
 
 export default defineConfig({
   profiles: {
     dev: {
-      target: { kind: "postgres", url: process.env.PG_URL ?? "", schema: "analytics" },
+      target: postgresAdapter({ url: process.env.PG_URL ?? "", schema: "analytics" }),
     },
     prod: {
-      target: { kind: "postgres", url: process.env.PROD_PG_URL ?? "", schema: "analytics" },
+      target: postgresAdapter({ url: process.env.PROD_PG_URL ?? "", schema: "analytics" }),
     },
   },
   sources: {},
@@ -42,10 +44,9 @@ If the profile name does not exist in `config.profiles`, the command exits with
 
 When a command runs, otter:
 
-1. Loads `otter.config.ts`.
-2. Reads `profiles[values.profile]`.
-3. Dynamically imports `@otter/adapter-<target.kind>`.
-4. Calls `createAdapter(target)` to get the live `Adapter`.
+1. Loads `otter.config.ts` (which in turn imports and calls the adapter factory).
+2. Reads `profiles[values.profile].target` — the already-instantiated `Adapter`.
+3. Uses `adapter.schema` as the default schema for materialization and `search_path`.
 
 See [adapters.md](adapters.md#adapter-interface) for the `Adapter` contract and
 [adapter-postgres.md](adapter-postgres.md) for the only driver shipped today.
@@ -56,27 +57,27 @@ A two-profile setup for dev and production, with sources that both profiles shar
 
 ```typescript
 // otter.config.ts
+import { postgresAdapter } from "@otter/adapter-postgres";
 import { defineConfig } from "@otter/core";
+import { postgresSource } from "@otter/source-postgres";
 
 export default defineConfig({
   profiles: {
     dev: {
-      target: {
-        kind: "postgres",
+      target: postgresAdapter({
         url: process.env.PG_URL ?? "postgres://localhost:5432/dev",
         schema: "analytics",
-      },
+      }),
     },
     prod: {
-      target: {
-        kind: "postgres",
+      target: postgresAdapter({
         url: process.env.PROD_PG_URL ?? "",
         schema: "analytics",
-      },
+      }),
     },
   },
   sources: {
-    stripe_pg: { kind: "postgres", url: process.env.STRIPE_PG_URL ?? "" },
+    stripe_pg: postgresSource({ url: process.env.STRIPE_PG_URL ?? "" }),
   },
   modelsDir: "models",
 });

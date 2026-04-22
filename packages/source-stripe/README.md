@@ -15,22 +15,20 @@ bunx jsr add @otter/source-stripe
 deno add jsr:@otter/source-stripe
 ```
 
-You rarely import this package directly — the CLI resolves it via
-`await import("@otter/source-stripe")` when you declare a source with `kind: "stripe"`.
+Add it to your project's `dependencies` alongside `@otter/core` and `@otter/cli`.
 
 ## Configuration
 
 ```typescript
 // otter.config.ts
+import { postgresAdapter } from "@otter/adapter-postgres";
 import { defineConfig } from "@otter/core";
+import { stripeSource } from "@otter/source-stripe";
 
 export default defineConfig({
-  profiles: { dev: { target: { kind: "postgres", url: process.env.PG_URL ?? "" } } },
+  profiles: { dev: { target: postgresAdapter({ url: process.env.PG_URL ?? "" }) } },
   sources: {
-    stripe: {
-      kind: "stripe",
-      options: { apiKey: process.env.STRIPE_API_KEY },
-    },
+    stripe: stripeSource({ apiKey: process.env.STRIPE_API_KEY }),
   },
   modelsDir: "models",
 });

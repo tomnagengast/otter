@@ -26,7 +26,8 @@
       "@otter/core": ["./packages/core/src/index.ts"],
       "@otter/adapter-postgres": ["./packages/adapter-postgres/src/index.ts"],
       "@otter/source-postgres": ["./packages/source-postgres/src/index.ts"],
-      "@otter/source-clickhouse": ["./packages/source-clickhouse/src/index.ts"]
+      "@otter/source-clickhouse": ["./packages/source-clickhouse/src/index.ts"],
+      "@otter/source-stripe": ["./packages/source-stripe/src/index.ts"]
     }
   },
   "exclude": ["node_modules", "dist", "out", "coverage"]

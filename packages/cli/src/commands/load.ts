@@ -7,8 +7,6 @@ import {
   loadSourceDefinitions,
   openState,
   type ProfileConfig,
-  resolveAdapter,
-  resolveSource,
   resolveStream,
   type SourceDefinition,
   type StateStore,
@@ -55,8 +53,10 @@ export const loadCommand = defineCommand({
     mkdirSync(`${cwd}/.otter`, { recursive: true });
     const state = openState(`${cwd}/.otter/state.db`);
 
+    const usedSources = new Set<string>();
     try {
       for (const { sourceName, stream } of streams) {
+        usedSources.add(sourceName);
         await loadStream({
           cwd,
           config,
@@ -73,6 +73,11 @@ export const loadCommand = defineCommand({
       return 0;
     } finally {
       state.close();
+      for (const name of usedSources) {
+        const src = config.sources[name];
+        if (src) await src.close();
+      }
+      await profile.target.close();
     }
   },
 });
@@ -92,8 +97,9 @@ interface LoadStreamOpts {
 
 async function loadStream(opts: LoadStreamOpts): Promise<void> {
   const { config, profile, sourceName, stream, streamConfig, state } = opts;
-  const sourceConfig = config.sources[sourceName];
-  if (!sourceConfig) throw new Error(`unknown source: ${sourceName}`);
+  const src = config.sources[sourceName];
+  if (!src) throw new Error(`unknown source: ${sourceName}`);
+  const adapter = profile.target;
 
   const strategy = resolveStrategy(opts.strategyFlag, streamConfig?.write_disposition);
   const uniqueKey = opts.uniqueKeyFlag ?? normalizePrimaryKey(streamConfig?.primary_key);
@@ -113,12 +119,8 @@ async function loadStream(opts: LoadStreamOpts): Promise<void> {
     set: (key: string, value: string) => state.setCursor(sourceName, key, value),
   };
 
-  const { createSource } = await resolveSource(sourceConfig.kind);
-  const { createAdapter } = await resolveAdapter(profile.target.kind);
-  const src = createSource(sourceConfig);
-  const adapter = createAdapter(profile.target);
   const target = {
-    schema: profile.target.schema ?? "raw",
+    schema: adapter.schema,
     name: `raw_${sourceName}_${stream.replaceAll(".", "_")}`,
   };
 
@@ -130,20 +132,15 @@ async function loadStream(opts: LoadStreamOpts): Promise<void> {
   };
 
   const started = performance.now();
-  try {
-    const { columnTypes, rows } = await src.extract(stream, cursorState, extractOpts);
-    const result = await adapter.bulkLoad(target, rows, strategy, { uniqueKey, columnTypes });
-    console.log(
-      status(
-        "done",
-        rel(target.name, target.schema),
-        `${count(result.rows, "rows")} ${SEP} ${duration(performance.now() - started)}`,
-      ),
-    );
-  } finally {
-    await src.close();
-    await adapter.close();
-  }
+  const { columnTypes, rows } = await src.extract(stream, cursorState, extractOpts);
+  const result = await adapter.bulkLoad(target, rows, strategy, { uniqueKey, columnTypes });
+  console.log(
+    status(
+      "done",
+      rel(target.name, target.schema),
+      `${count(result.rows, "rows")} ${SEP} ${duration(performance.now() - started)}`,
+    ),
+  );
 }
 
 function resolveStrategy(

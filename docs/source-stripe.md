@@ -5,13 +5,8 @@ uses Bun's built-in `fetch` — no `stripe` SDK dependency.
 
 ## Configuration
 
-Declare a Stripe source under `sources` in `otter.config.ts`. Stripe authenticates with a secret
-key, so the driver reads `options` instead of `url`:
-
-| Field     | Type                | Default | Description                      |
-| --------- | ------------------- | ------- | -------------------------------- |
-| `kind`    | `"stripe"`          | —       | Driver discriminant              |
-| `options` | `Record<string, _>` | —       | Driver options (see table below) |
+Import `stripeSource` and declare the source under `sources` in `otter.config.ts`. Stripe
+authenticates with a secret key passed to the factory:
 
 | Option          | Type     | Default                  | Description                                     |
 | --------------- | -------- | ------------------------ | ----------------------------------------------- |
@@ -23,11 +18,10 @@ key, so the driver reads `options` instead of `url`:
 
 ```typescript
 // otter.config.ts (excerpt)
+import { stripeSource } from "@otter/source-stripe";
+
 sources: {
-  stripe: {
-    kind: "stripe",
-    options: { apiKey: process.env.STRIPE_API_KEY },
-  },
+  stripe: stripeSource({ apiKey: process.env.STRIPE_API_KEY }),
 },
 ```
 
@@ -96,15 +90,14 @@ otter load stripe.charges
 
 ```typescript
 // otter.config.ts
+import { postgresAdapter } from "@otter/adapter-postgres";
 import { defineConfig } from "@otter/core";
+import { stripeSource } from "@otter/source-stripe";
 
 export default defineConfig({
-  profiles: { dev: { target: { kind: "postgres", url: process.env.PG_URL ?? "" } } },
+  profiles: { dev: { target: postgresAdapter({ url: process.env.PG_URL ?? "" }) } },
   sources: {
-    stripe: {
-      kind: "stripe",
-      options: { apiKey: process.env.STRIPE_API_KEY },
-    },
+    stripe: stripeSource({ apiKey: process.env.STRIPE_API_KEY }),
   },
   modelsDir: "models",
   sourcesDir: "sources",
@@ -112,5 +105,5 @@ export default defineConfig({
 ```
 
 Related: [sources.md](sources.md#source-interface),
-[configuration.md](configuration.md#sourceconfig), [cli.md](cli.md#load),
+[configuration.md](configuration.md#sources), [cli.md](cli.md#load),
 [materializations.md](materializations.md#incremental).

@@ -29,6 +29,8 @@ export interface MergeIncrementalOpts {
 
 export interface Adapter {
   kind: string;
+  /** Default schema used for materialization and bare-identifier resolution. */
+  schema: string;
   introspect(): Promise<{ tables: TableRef[] }>;
   bulkLoad(
     target: TableRef,
@@ -41,10 +43,4 @@ export interface Adapter {
   /** Optional: build staging from compiledSql, merge into final, drop staging. */
   mergeIncremental?(opts: MergeIncrementalOpts): Promise<void>;
   close(): Promise<void>;
-}
-
-export async function resolveAdapter(kind: string): Promise<{
-  createAdapter: (config: { url: string; schema?: string }) => Adapter;
-}> {
-  return import(`@otter/adapter-${kind}`);
 }

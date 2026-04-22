@@ -15,32 +15,31 @@ bunx jsr add @otter/source-clickhouse
 deno add jsr:@otter/source-clickhouse
 ```
 
-You rarely import this package directly — the CLI resolves it via
-`await import("@otter/source-clickhouse")` when you declare a source with `kind: "clickhouse"`.
+Add it to your project's `dependencies` alongside `@otter/core` and `@otter/cli`.
 
 ## Configuration
 
-Declare a ClickHouse source under `sources` in `otter.config.ts`:
+Import `clickhouseSource` and declare the source under `sources` in `otter.config.ts`:
 
 ```typescript
+import { postgresAdapter } from "@otter/adapter-postgres";
 import { defineConfig } from "@otter/core";
+import { clickhouseSource } from "@otter/source-clickhouse";
 
 export default defineConfig({
-  profiles: { dev: { target: { kind: "postgres", url: process.env.PG_URL ?? "" } } },
+  profiles: { dev: { target: postgresAdapter({ url: process.env.PG_URL ?? "" }) } },
   sources: {
-    events_ch: {
-      kind: "clickhouse",
+    events_ch: clickhouseSource({
       url: process.env.CLICKHOUSE_URL ?? "http://localhost:8123",
-    },
+    }),
   },
   modelsDir: "models",
 });
 ```
 
-| Field  | Type           | Default | Description                          |
-| ------ | -------------- | ------- | ------------------------------------ |
-| `kind` | `"clickhouse"` | —       | Driver discriminant                  |
-| `url`  | `string`       | —       | HTTP(S) URL of the ClickHouse server |
+| Option | Type     | Default | Description                          |
+| ------ | -------- | ------- | ------------------------------------ |
+| `url`  | `string` | —       | HTTP(S) URL of the ClickHouse server |
 
 ### Auth
 

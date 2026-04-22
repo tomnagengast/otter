@@ -3,14 +3,19 @@
 Otter is configured through a single `otter.config.ts` file at the project root. The file exports
 a `defineConfig(...)` call that declares profiles, sources, and where models live on disk.
 
+Projects install sources and adapters as explicit dependencies, then import their factories in the
+config file. There is no runtime driver-by-name lookup — the packages you import determine the
+capabilities your project has.
+
 ## Table of Contents
 
 - [File Location](#file-location)
+- [Project Dependencies](#project-dependencies)
 - [defineConfig](#defineconfig)
 - [Config Fields](#config-fields)
 - [ProfileConfig](#profileconfig)
-- [SourceConfig](#sourceconfig)
-- [TargetConfig](#targetconfig)
+- [Sources](#sources)
+- [Targets](#targets)
 - [Environment Variables](#environment-variables)
 - [Example](#example)
 
@@ -19,15 +24,40 @@ a `defineConfig(...)` call that declares profiles, sources, and where models liv
 `otter.config.ts` must sit at the root of the project you invoke `otter` from. The CLI resolves
 the file relative to `process.cwd()` and uses dynamic `import(...)` to load it.
 
+## Project Dependencies
+
+Add the sources and adapters you use to your project's `package.json` alongside `@otter/cli`:
+
+```json
+{
+  "dependencies": {
+    "@otter/core": "^0.1.1",
+    "@otter/adapter-postgres": "^0.1.1",
+    "@otter/source-postgres": "^0.1.1",
+    "@otter/source-clickhouse": "^0.1.1",
+    "@otter/source-stripe": "^0.1.1"
+  },
+  "devDependencies": {
+    "@otter/cli": "^0.1.1"
+  }
+}
+```
+
 ## defineConfig
 
 ```typescript
 // otter.config.ts
+import { postgresAdapter } from "@otter/adapter-postgres";
 import { defineConfig } from "@otter/core";
+import { postgresSource } from "@otter/source-postgres";
 
 export default defineConfig({
-  profiles: { dev: { target: { kind: "postgres", url: process.env.PG_URL ?? "" } } },
-  sources: { stripe_pg: { kind: "postgres", url: process.env.SOURCE_PG_URL ?? "" } },
+  profiles: {
+    dev: { target: postgresAdapter({ url: process.env.PG_URL ?? "" }) },
+  },
+  sources: {
+    stripe_pg: postgresSource({ url: process.env.SOURCE_PG_URL ?? "" }),
+  },
   modelsDir: "models",
 });
 ```
@@ -40,7 +70,7 @@ anchor inference on the `Config` type.
 | Field        | Type                            | Default     | Description                                                                                                                      |
 | ------------ | ------------------------------- | ----------- | -------------------------------------------------------------------------------------------------------------------------------- |
 | `profiles`   | `Record<string, ProfileConfig>` | —           | Named target environments; one is selected per command via `--profile`                                                           |
-| `sources`    | `Record<string, SourceConfig>`  | —           | Named extraction inputs; empty `{}` if you do not use `otter load`                                                               |
+| `sources`    | `Record<string, Source>`        | —           | Named extraction inputs; empty `{}` if you do not use `otter load`                                                               |
 | `modelsDir`  | `string`                        | —           | Directory containing `.sql` model files                                                                                          |
 | `seedsDir`   | `string`                        | `"seeds"`   | Directory containing seed CSV files (empty CSVs are tolerated)                                                                   |
 | `sourcesDir` | `string`                        | `"sources"` | Directory containing `defineSource()` `.ts` files that declare streams (`write_disposition`, `primary_key`, `incremental`, etc.) |
@@ -49,43 +79,55 @@ anchor inference on the `Config` type.
 
 ```typescript
 interface ProfileConfig {
-  target: TargetConfig;
+  target: Adapter;
 }
 ```
 
-Profiles are selected per-command with `--profile <name>` (default `dev`). See
+Profiles are selected per-command with `--profile <name>` (default `dev`). The `target` is an
+`Adapter` instance produced by a factory from an `@otter/adapter-*` package. See
 [profiles.md](profiles.md).
 
-## SourceConfig
+## Sources
+
+Each entry in `sources` is a `Source` instance produced by a factory from an `@otter/source-*`
+package. Factories take driver-specific options (typed per package):
 
 ```typescript
-interface SourceConfig {
-  kind: "postgres" | "clickhouse" | "stripe" | string;
-  url?: string;
-  options?: Record<string, unknown>;
+import { postgresSource } from "@otter/source-postgres";
+import { clickhouseSource } from "@otter/source-clickhouse";
+import { stripeSource } from "@otter/source-stripe";
+
+sources: {
+  customers_pg: postgresSource({ url: process.env.SOURCE_PG_URL ?? "" }),
+  events_ch: clickhouseSource({ url: process.env.CLICKHOUSE_URL ?? "" }),
+  billing: stripeSource({ apiKey: process.env.STRIPE_API_KEY }),
 }
 ```
 
-`kind` determines which source driver is loaded via `await import("@otter/source-" + kind)`.
-Connection-string drivers (Postgres, ClickHouse) read `url`; API-style drivers (Stripe) read
-`options`. See [sources.md](sources.md) and the per-driver pages
-([source-postgres.md](source-postgres.md), [source-clickhouse.md](source-clickhouse.md),
-[source-stripe.md](source-stripe.md)).
+See [sources.md](sources.md) and the per-driver pages ([source-postgres.md](source-postgres.md),
+[source-clickhouse.md](source-clickhouse.md), [source-stripe.md](source-stripe.md)).
 
-## TargetConfig
+## Targets
+
+Each `profiles[*].target` is an `Adapter` instance. v1 only ships `postgresAdapter` from
+`@otter/adapter-postgres`:
 
 ```typescript
-interface TargetConfig {
-  kind: "postgres";
-  url: string;
-  schema?: string;
+import { postgresAdapter } from "@otter/adapter-postgres";
+
+profiles: {
+  dev: {
+    target: postgresAdapter({
+      url: process.env.PG_URL ?? "",
+      schema: "analytics",
+    }),
+  },
 }
 ```
 
-`kind` determines which adapter is loaded via `await import("@otter/adapter-" + kind)`. v1 only
-ships `postgres`. `schema` controls the default schema for materialized models (default:
-`analytics`); the raw schema for `otter load` defaults to `raw`. See
-[adapter-postgres.md](adapter-postgres.md).
+`schema` controls the default schema for materialized models and the raw schema for
+`otter load` (both use the same schema — configure a second profile if you need to separate them).
+Defaults to `"public"`. See [adapter-postgres.md](adapter-postgres.md).
 
 ## Environment Variables
 
@@ -98,28 +140,29 @@ A realistic config with two profiles and two sources:
 
 ```typescript
 // otter.config.ts
+import { postgresAdapter } from "@otter/adapter-postgres";
 import { defineConfig } from "@otter/core";
+import { clickhouseSource } from "@otter/source-clickhouse";
+import { postgresSource } from "@otter/source-postgres";
 
 export default defineConfig({
   profiles: {
     dev: {
-      target: {
-        kind: "postgres",
+      target: postgresAdapter({
         url: process.env.PG_URL ?? "postgres://localhost:5432/dev",
         schema: "analytics",
-      },
+      }),
     },
     prod: {
-      target: {
-        kind: "postgres",
+      target: postgresAdapter({
         url: process.env.PROD_PG_URL ?? "",
         schema: "analytics",
-      },
+      }),
     },
   },
   sources: {
-    stripe_pg: { kind: "postgres", url: process.env.STRIPE_PG_URL ?? "" },
-    events_ch: { kind: "clickhouse", url: process.env.CLICKHOUSE_URL ?? "" },
+    stripe_pg: postgresSource({ url: process.env.STRIPE_PG_URL ?? "" }),
+    events_ch: clickhouseSource({ url: process.env.CLICKHOUSE_URL ?? "" }),
   },
   modelsDir: "models",
 });

@@ -8,7 +8,6 @@ import {
   loadSeeds,
   OtterEmitter,
   parseSelector,
-  resolveAdapter,
   runBuild,
   runModelTests,
   writeCompiledSql,
@@ -32,9 +31,8 @@ export const buildCommand = defineCommand({
     const profileName = values.profile as string;
     const profile = config.profiles[profileName];
     if (!profile) throw new Error(`unknown profile: ${profileName}`);
-    const { createAdapter } = await resolveAdapter(profile.target.kind);
-    const schema = profile.target.schema ?? "analytics";
-    const adapter = createAdapter({ ...profile.target, schema });
+    const adapter = profile.target;
+    const schema = adapter.schema;
 
     const manifest = await compileProject(config, cwd);
     await writeManifest(`${cwd}/.otter/target/manifest.json`, manifest);

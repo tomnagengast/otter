@@ -22,12 +22,11 @@ deno add jsr:@otter/core
 
 ## What's exported
 
-- **Config** — `defineConfig`, `loadConfig`, `Config`, `ProfileConfig`, `SourceConfig`,
-  `TargetConfig`.
-- **Source authoring** — `defineSource`, `resolveSource`, `Source`, `ExtractOpts`,
-  `ExtractStream`, `Row`, `CursorState`, `WriteDisposition`, `IncrementalConfig`.
-- **Adapter authoring** — `resolveAdapter`, `Adapter`, `LoadStrategy`, `TableRef`,
-  `MergeIncrementalOpts`, `NotSupportedError`.
+- **Config** — `defineConfig`, `loadConfig`, `Config`, `ProfileConfig`.
+- **Source authoring** — `defineSource`, `Source`, `ExtractOpts`, `ExtractStream`, `Row`,
+  `CursorState`, `WriteDisposition`, `IncrementalConfig`.
+- **Adapter authoring** — `Adapter`, `LoadStrategy`, `TableRef`, `MergeIncrementalOpts`,
+  `NotSupportedError`.
 - **Compile / run** — `compileProject`, `buildDag`, `toposort`, `runBuild`, `runModelTests`,
   `readManifest`, `writeManifest`, `writeCompiledSql`, `Manifest`, `Dag`, `DagNode`,
   `ColumnConfig`, `ColumnTest`.
@@ -40,20 +39,21 @@ deno add jsr:@otter/core
 
 ```typescript
 // otter.config.ts
+import { postgresAdapter } from "@otter/adapter-postgres";
 import { defineConfig } from "@otter/core";
+import { postgresSource } from "@otter/source-postgres";
 
 export default defineConfig({
   profiles: {
     dev: {
-      target: {
-        kind: "postgres",
+      target: postgresAdapter({
         url: process.env.PG_URL ?? "postgres://localhost:5432/dev",
         schema: "analytics",
-      },
+      }),
     },
   },
   sources: {
-    stripe_pg: { kind: "postgres", url: process.env.STRIPE_PG_URL ?? "" },
+    stripe_pg: postgresSource({ url: process.env.STRIPE_PG_URL ?? "" }),
   },
   modelsDir: "models",
 });
@@ -63,13 +63,17 @@ export default defineConfig({
 
 ## Writing a source driver
 
-A source driver is any package that exports `createSource(config)` returning a `Source`. The
-CLI resolves it at runtime as `@otter/source-<kind>`:
+A source driver is any package that exports a typed factory returning a `Source`. The factory is
+imported explicitly from `otter.config.ts`:
 
 ```typescript
 import type { Source, ExtractStream, CursorState, ExtractOpts } from "@otter/core";
 
-export function createSource(config: { url: string }): Source {
+export interface MySourceOptions {
+  url: string;
+}
+
+export function mySource(options: MySourceOptions): Source {
   return {
     kind: "my-thing",
     async extract(stream, state, opts): Promise<ExtractStream> {
@@ -82,15 +86,21 @@ export function createSource(config: { url: string }): Source {
 
 ## Writing a target adapter
 
-A target adapter is any package that exports `createAdapter(config)` returning an `Adapter`.
-The CLI resolves it at runtime as `@otter/adapter-<kind>`:
+A target adapter is any package that exports a typed factory returning an `Adapter`:
 
 ```typescript
 import type { Adapter, TableRef, LoadStrategy, Row } from "@otter/core";
 
-export function createAdapter(config: { url: string; schema?: string }): Adapter {
+export interface MyAdapterOptions {
+  url: string;
+  schema?: string;
+}
+
+export function myAdapter(options: MyAdapterOptions): Adapter {
+  const schema = options.schema ?? "public";
   return {
     kind: "my-db",
+    schema,
     async introspect() {
       /* ... */
     },

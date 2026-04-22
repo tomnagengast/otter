@@ -2,8 +2,25 @@ import { expect, test } from "bun:test";
 import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import type { Adapter } from "./adapter.ts";
 import { compileProject } from "./compile.ts";
 import { defineConfig } from "./config.ts";
+
+const stubAdapter: Adapter = {
+  kind: "postgres",
+  schema: "public",
+  async introspect() {
+    return { tables: [] };
+  },
+  async bulkLoad() {
+    return { rows: 0, duration_ms: 0 };
+  },
+  async execute() {
+    return { duration_ms: 0 };
+  },
+  async swap() {},
+  async close() {},
+};
 
 test("compiles a two-model project and records ref edge", async () => {
   const dir = mkdtempSync(join(tmpdir(), "otter-test-"));
@@ -16,7 +33,7 @@ test("compiles a two-model project and records ref edge", async () => {
     );
 
     const config = defineConfig({
-      profiles: { dev: { target: { kind: "postgres", url: "" } } },
+      profiles: { dev: { target: stubAdapter } },
       sources: {},
       modelsDir: "models",
     });
@@ -39,7 +56,7 @@ test("defaults to materialized: view when config block is omitted", async () => 
     mkdirSync(`${dir}/models`);
     writeFileSync(`${dir}/models/a.sql`, `select 1\n`);
     const config = defineConfig({
-      profiles: { dev: { target: { kind: "postgres", url: "" } } },
+      profiles: { dev: { target: stubAdapter } },
       sources: {},
       modelsDir: "models",
     });
@@ -59,7 +76,7 @@ test("records source() dependency as sourceName.stream", async () => {
       `{{ config(materialized: "view") }}\nselect * from {{ source("stripe_pg", "charges") }}\n`,
     );
     const config = defineConfig({
-      profiles: { dev: { target: { kind: "postgres", url: "" } } },
+      profiles: { dev: { target: stubAdapter } },
       sources: {},
       modelsDir: "models",
     });
@@ -80,7 +97,7 @@ test("preserves tags and unique_key from config block", async () => {
       `{{ config(materialized: "incremental", unique_key: "id", tags: ["nightly"]) }}\nselect 1 as id\n`,
     );
     const config = defineConfig({
-      profiles: { dev: { target: { kind: "postgres", url: "" } } },
+      profiles: { dev: { target: stubAdapter } },
       sources: {},
       modelsDir: "models",
     });

@@ -5,20 +5,18 @@ uses `Bun.sql` — no `pg` or `postgres.js` dependency.
 
 ## Configuration
 
-Declare a Postgres source under `sources` in `otter.config.ts`:
+Import `postgresSource` and declare the source under `sources` in `otter.config.ts`:
 
-| Field  | Type         | Default | Description                       |
-| ------ | ------------ | ------- | --------------------------------- |
-| `kind` | `"postgres"` | —       | Driver discriminant               |
-| `url`  | `string`     | —       | Source Postgres connection string |
+| Option | Type     | Default | Description                       |
+| ------ | -------- | ------- | --------------------------------- |
+| `url`  | `string` | —       | Source Postgres connection string |
 
 ```typescript
 // otter.config.ts (excerpt)
+import { postgresSource } from "@otter/source-postgres";
+
 sources: {
-  stripe_pg: {
-    kind: "postgres",
-    url: process.env.STRIPE_PG_URL ?? "",
-  },
+  stripe_pg: postgresSource({ url: process.env.STRIPE_PG_URL ?? "" }),
 },
 ```
 
@@ -70,12 +68,14 @@ Pass `--full-refresh` to `otter load` to clear the cursor before extract. See
 
 ```typescript
 // otter.config.ts
+import { postgresAdapter } from "@otter/adapter-postgres";
 import { defineConfig } from "@otter/core";
+import { postgresSource } from "@otter/source-postgres";
 
 export default defineConfig({
-  profiles: { dev: { target: { kind: "postgres", url: process.env.PG_URL ?? "" } } },
+  profiles: { dev: { target: postgresAdapter({ url: process.env.PG_URL ?? "" }) } },
   sources: {
-    stripe_pg: { kind: "postgres", url: process.env.STRIPE_PG_URL ?? "" },
+    stripe_pg: postgresSource({ url: process.env.STRIPE_PG_URL ?? "" }),
   },
   modelsDir: "models",
 });
@@ -85,5 +85,5 @@ export default defineConfig({
 otter load stripe_pg.charges --strategy merge --unique-key id
 ```
 
-Related: [sources.md](sources.md#source-interface), [configuration.md](configuration.md#sourceconfig),
+Related: [sources.md](sources.md#source-interface), [configuration.md](configuration.md#sources),
 [cli.md](cli.md#load), [materializations.md](materializations.md#incremental).

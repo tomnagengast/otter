@@ -18,24 +18,23 @@ bunx jsr add @otter/adapter-postgres
 deno add jsr:@otter/adapter-postgres
 ```
 
-You rarely import this package directly — the CLI resolves it via
-`await import("@otter/adapter-postgres")` when you set `target.kind = "postgres"`.
+Add it to your project's `dependencies` alongside `@otter/core` and `@otter/cli`.
 
 ## Configuration
 
-Select the Postgres adapter in `otter.config.ts`:
+Import `postgresAdapter` and call it inside `otter.config.ts`:
 
 ```typescript
+import { postgresAdapter } from "@otter/adapter-postgres";
 import { defineConfig } from "@otter/core";
 
 export default defineConfig({
   profiles: {
     dev: {
-      target: {
-        kind: "postgres",
+      target: postgresAdapter({
         url: process.env.PG_URL ?? "postgres://localhost:5432/dev",
         schema: "analytics",
-      },
+      }),
     },
   },
   sources: {},
@@ -43,14 +42,13 @@ export default defineConfig({
 });
 ```
 
-| Field    | Type         | Default                            | Description                                               |
-| -------- | ------------ | ---------------------------------- | --------------------------------------------------------- |
-| `kind`   | `"postgres"` | —                                  | Driver discriminant                                       |
-| `url`    | `string`     | —                                  | `postgres://user:pass@host:port/db`                       |
-| `schema` | `string`     | `analytics` (build) / `raw` (load) | Default target schema; appended to `url` as `search_path` |
+| Option   | Type     | Default    | Description                                               |
+| -------- | -------- | ---------- | --------------------------------------------------------- |
+| `url`    | `string` | —          | `postgres://user:pass@host:port/db`                       |
+| `schema` | `string` | `"public"` | Default target schema; used as `search_path` for bare ids |
 
-The adapter appends `options=-c search_path=<schema>` to the URL so bare identifiers from
-`ref()`, `source()`, and `seed()` resolve against the configured schema automatically.
+The adapter sets `search_path` via `SET LOCAL` so bare identifiers from `ref()`, `source()`, and
+`seed()` resolve against the configured schema automatically.
 
 ## Load strategies
 
@@ -84,9 +82,9 @@ Schema-qualified names are produced at execution time using the configured schem
 For tests or custom runners:
 
 ```typescript
-import { createAdapter } from "@otter/adapter-postgres";
+import { postgresAdapter } from "@otter/adapter-postgres";
 
-const adapter = createAdapter({
+const adapter = postgresAdapter({
   url: process.env.PG_URL!,
   schema: "analytics",
 });
@@ -107,7 +105,7 @@ await adapter.close();
 - Materializations —
   [materializations](https://github.com/tomnagengast/otter/blob/main/docs/materializations.md)
 - Config —
-  [configuration](https://github.com/tomnagengast/otter/blob/main/docs/configuration.md#targetconfig)
+  [configuration](https://github.com/tomnagengast/otter/blob/main/docs/configuration.md#targets)
 
 ## License
 

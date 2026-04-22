@@ -5,17 +5,16 @@ tables from `otter load`. It uses `Bun.sql` under the hood — no `pg` or `postg
 
 ## Configuration
 
-Select the Postgres adapter by setting `profiles.<name>.target.kind = "postgres"` in
-`otter.config.ts` (see [configuration.md](configuration.md#targetconfig)).
+Import `postgresAdapter` and call it inside `otter.config.ts` to create the target adapter (see
+[configuration.md](configuration.md#targets)).
 
-| Field    | Type         | Default   | Description                                                                                                          |
-| -------- | ------------ | --------- | -------------------------------------------------------------------------------------------------------------------- |
-| `kind`   | `"postgres"` | —         | Driver discriminant                                                                                                  |
-| `url`    | `string`     | —         | Postgres connection string (`postgres://user:pass@host:port/db`)                                                     |
-| `schema` | `string`     | see below | Target schema. The CLI defaults to `analytics` for `otter build`/`otter show` and `raw` for `otter load` when unset. |
+| Option   | Type     | Default    | Description                                                      |
+| -------- | -------- | ---------- | ---------------------------------------------------------------- |
+| `url`    | `string` | —          | Postgres connection string (`postgres://user:pass@host:port/db`) |
+| `schema` | `string` | `"public"` | Target schema; also used as `search_path` for bare identifiers.  |
 
-The adapter appends `options=-c search_path=<schema>` to the URL so bare identifiers from `ref`,
-`source`, and `seed` resolve against the configured schema automatically.
+The adapter sets `search_path` via `SET LOCAL` so bare identifiers from `ref`, `source`, and
+`seed` resolve against the configured schema automatically.
 
 ## Load Strategies
 
@@ -53,16 +52,16 @@ configured schema.
 
 ```typescript
 // otter.config.ts
+import { postgresAdapter } from "@otter/adapter-postgres";
 import { defineConfig } from "@otter/core";
 
 export default defineConfig({
   profiles: {
     dev: {
-      target: {
-        kind: "postgres",
+      target: postgresAdapter({
         url: process.env.PG_URL ?? "postgres://localhost:5432/dev",
         schema: "analytics",
-      },
+      }),
     },
   },
   sources: {},
@@ -70,5 +69,5 @@ export default defineConfig({
 });
 ```
 
-Related: [configuration.md](configuration.md#targetconfig), [load-strategies.md](load-strategies.md),
+Related: [configuration.md](configuration.md#targets), [load-strategies.md](load-strategies.md),
 [materializations.md](materializations.md), [adapters.md](adapters.md#adapter-interface).

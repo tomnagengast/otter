@@ -5,18 +5,38 @@ on `@otter/core` for types and runtime plumbing.
 
 ## Package Map
 
-| Package                    | Description                                            | Doc                                          |
-| -------------------------- | ------------------------------------------------------ | -------------------------------------------- |
-| `@otter/core`              | Config, DAG, compiler, runner, interfaces, state store | [configuration.md](configuration.md)         |
-| `@otter/cli`               | `otter` CLI binary (six commands)                      | [cli.md](cli.md)                             |
-| `@otter/adapter-postgres`  | Postgres target adapter (`Bun.sql`)                    | [adapter-postgres.md](adapter-postgres.md)   |
-| `@otter/source-postgres`   | Postgres source (paginated extract)                    | [source-postgres.md](source-postgres.md)     |
-| `@otter/source-clickhouse` | ClickHouse source (HTTP streaming, `JSONEachRow`)      | [source-clickhouse.md](source-clickhouse.md) |
-| `@otter/source-stripe`     | Stripe source (REST list pagination, `created` cursor) | [source-stripe.md](source-stripe.md)         |
+| Package                    | Description                                                     | Doc                                          |
+| -------------------------- | --------------------------------------------------------------- | -------------------------------------------- |
+| `@otter/core`              | Config, DAG, compiler, runner, interfaces, state store          | [configuration.md](configuration.md)         |
+| `@otter/cli`               | `otter` CLI binary (six commands)                               | [cli.md](cli.md)                             |
+| `@otter/adapter-postgres`  | Postgres target adapter (`postgresAdapter`, `Bun.sql`)          | [adapter-postgres.md](adapter-postgres.md)   |
+| `@otter/source-postgres`   | Postgres source (`postgresSource`, paginated extract)           | [source-postgres.md](source-postgres.md)     |
+| `@otter/source-clickhouse` | ClickHouse source (`clickhouseSource`, HTTP `JSONEachRow`)      | [source-clickhouse.md](source-clickhouse.md) |
+| `@otter/source-stripe`     | Stripe source (`stripeSource`, REST pagination, `created` curs) | [source-stripe.md](source-stripe.md)         |
 
-## Installation
+## Consumer Installation
 
-Otter is currently consumed via Bun workspace links. From a clone of the repo:
+Users' projects declare the sources, adapters, and CLI they need explicitly in `package.json`:
+
+```json
+{
+  "dependencies": {
+    "@otter/core": "^0.1.1",
+    "@otter/adapter-postgres": "^0.1.1",
+    "@otter/source-postgres": "^0.1.1"
+  },
+  "devDependencies": {
+    "@otter/cli": "^0.1.1"
+  }
+}
+```
+
+Only the packages declared here are available to `otter.config.ts`. There is no magic driver
+lookup — the imports in your config determine your capabilities.
+
+## Development Installation
+
+From a clone of this repo:
 
 ```bash
 bun install
@@ -24,8 +44,8 @@ cd packages/cli && bun link
 otter --version
 ```
 
-Per-package npm publishing is not shipped yet. When it is, `bun add @otter/cli` will resolve all
-transitive adapter and source packages.
+Then from any consumer project that depends on `@otter/cli` via `workspace:*`, run `bun install`
+to link everything.
 
 ## Version Compatibility
 
@@ -34,13 +54,14 @@ every package together.
 
 ## Adding a New Package
 
-New source or adapter packages follow the naming convention `@otter/source-<kind>` /
-`@otter/adapter-<kind>` so `resolveSource` and `resolveAdapter` in `@otter/core` find them by
-dynamic import.
+New source or adapter packages don't need to follow any naming convention — the CLI uses the
+factory you import in `otter.config.ts`, not the package name. Conventionally we name them
+`@otter/source-<kind>` / `@otter/adapter-<kind>` for discoverability.
 
 1. Create the package under `packages/<name>/`.
-2. Add a `package.json` with `"name": "@otter/<name>"` and `"dependencies": { "@otter/core": "workspace:*" }`.
-3. Export `createSource` (for sources) or `createAdapter` (for adapters).
+2. Add a `package.json` with `"dependencies": { "@otter/core": "workspace:*" }`.
+3. Export a typed factory function that returns a `Source` or `Adapter`. By convention name it
+   `<kind>Source` or `<kind>Adapter`.
 4. Run `bun install` to register it in the workspace.
 
 See [sources.md](sources.md#adding-a-source-driver) and

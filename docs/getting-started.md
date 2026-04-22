@@ -26,16 +26,35 @@ After `bun link` the `otter` binary is available on your `$PATH`. See
 Create a project directory with an `otter.config.ts` at its root and a `models/` directory next to
 it.
 
+Add the packages your project needs as dependencies in `package.json`:
+
+```json
+{
+  "dependencies": {
+    "@otter/core": "^0.1.1",
+    "@otter/adapter-postgres": "^0.1.1",
+    "@otter/source-postgres": "^0.1.1"
+  },
+  "devDependencies": {
+    "@otter/cli": "^0.1.1"
+  }
+}
+```
+
+Then write your config by importing the factories you need:
+
 ```typescript
 // otter.config.ts
+import { postgresAdapter } from "@otter/adapter-postgres";
 import { defineConfig } from "@otter/core";
+import { postgresSource } from "@otter/source-postgres";
 
 export default defineConfig({
   profiles: {
-    dev: { target: { kind: "postgres", url: process.env.PG_URL ?? "" } },
+    dev: { target: postgresAdapter({ url: process.env.PG_URL ?? "" }) },
   },
   sources: {
-    stripe_pg: { kind: "postgres", url: process.env.SOURCE_PG_URL ?? "" },
+    stripe_pg: postgresSource({ url: process.env.SOURCE_PG_URL ?? "" }),
   },
   modelsDir: "models",
 });

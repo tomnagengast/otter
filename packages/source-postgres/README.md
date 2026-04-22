@@ -17,29 +17,29 @@ bunx jsr add @otter/source-postgres
 deno add jsr:@otter/source-postgres
 ```
 
-You rarely import this package directly — the CLI resolves it via
-`await import("@otter/source-postgres")` when you declare a source with `kind: "postgres"`.
+Add it to your project's `dependencies` alongside `@otter/core` and `@otter/cli`.
 
 ## Configuration
 
-Declare a Postgres source under `sources` in `otter.config.ts`:
+Import `postgresSource` and declare the source under `sources` in `otter.config.ts`:
 
 ```typescript
+import { postgresAdapter } from "@otter/adapter-postgres";
 import { defineConfig } from "@otter/core";
+import { postgresSource } from "@otter/source-postgres";
 
 export default defineConfig({
-  profiles: { dev: { target: { kind: "postgres", url: process.env.PG_URL ?? "" } } },
+  profiles: { dev: { target: postgresAdapter({ url: process.env.PG_URL ?? "" }) } },
   sources: {
-    stripe_pg: { kind: "postgres", url: process.env.STRIPE_PG_URL ?? "" },
+    stripe_pg: postgresSource({ url: process.env.STRIPE_PG_URL ?? "" }),
   },
   modelsDir: "models",
 });
 ```
 
-| Field  | Type         | Default | Description                       |
-| ------ | ------------ | ------- | --------------------------------- |
-| `kind` | `"postgres"` | —       | Driver discriminant               |
-| `url`  | `string`     | —       | Source Postgres connection string |
+| Option | Type     | Default | Description                       |
+| ------ | -------- | ------- | --------------------------------- |
+| `url`  | `string` | —       | Source Postgres connection string |
 
 ## Streams
 

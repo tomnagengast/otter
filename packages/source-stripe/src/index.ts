@@ -1,11 +1,4 @@
-import type {
-  CursorState,
-  ExtractOpts,
-  ExtractStream,
-  Row,
-  Source,
-  SourceConfig,
-} from "@otter/core";
+import type { CursorState, ExtractOpts, ExtractStream, Row, Source } from "@otter/core";
 
 const DEFAULT_BASE_URL = "https://api.stripe.com";
 const DEFAULT_PAGE_SIZE = 100;
@@ -13,7 +6,7 @@ const DEFAULT_API_VERSION = "2025-04-30.basil";
 const MAX_RETRIES = 5;
 const DEFAULT_CURSOR_FIELD = "created";
 
-interface StripeOptions {
+export interface StripeSourceOptions {
   /** Stripe secret key (sk_live_... / sk_test_...). Falls back to `STRIPE_API_KEY`. */
   apiKey?: string;
   /** Override the API base URL. Primarily useful for tests. */
@@ -33,8 +26,7 @@ interface StripeListResponse {
   data: Row[];
 }
 
-export function createSource(config: SourceConfig): Source {
-  const options = (config.options ?? {}) as StripeOptions;
+export function stripeSource(options: StripeSourceOptions = {}): Source {
   const apiKey = options.apiKey ?? process.env.STRIPE_API_KEY;
   if (!apiKey) {
     throw new Error(

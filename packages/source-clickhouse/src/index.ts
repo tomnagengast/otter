@@ -1,8 +1,13 @@
-import type { Row, Source, SourceConfig } from "@otter/core";
+import type { Row, Source } from "@otter/core";
 
-export function createSource(config: SourceConfig): Source {
-  if (!config.url) throw new Error("source-clickhouse: config.url is required");
-  const url = config.url;
+export interface ClickhouseSourceOptions {
+  /** ClickHouse HTTP URL (may include username:password@). */
+  url: string;
+}
+
+export function clickhouseSource(options: ClickhouseSourceOptions): Source {
+  if (!options.url) throw new Error("source-clickhouse: options.url is required");
+  const url = options.url;
   return {
     kind: "clickhouse",
     async extract(stream, state, opts) {

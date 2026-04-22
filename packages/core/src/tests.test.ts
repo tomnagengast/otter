@@ -7,6 +7,7 @@ function mockAdapter(responses: Record<string, number>): { adapter: Adapter; que
   const queries: string[] = [];
   const adapter: Adapter = {
     kind: "postgres",
+    schema: "public",
     async introspect() {
       return { tables: [] };
     },

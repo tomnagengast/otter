@@ -1,28 +1,26 @@
+import { postgresAdapter } from "@otter/adapter-postgres";
 import { defineConfig } from "@otter/core";
+import { clickhouseSource } from "@otter/source-clickhouse";
+import { postgresSource } from "@otter/source-postgres";
+import { stripeSource } from "@otter/source-stripe";
 
 export default defineConfig({
   profiles: {
     dev: {
-      target: {
-        kind: "postgres",
+      target: postgresAdapter({
         url: process.env.ANALYTICS_PG_URL ?? "postgres://postgres:otter@localhost:5433/analytics",
         schema: "analytics",
-      },
+      }),
     },
   },
   sources: {
-    postgres: {
-      kind: "postgres",
+    postgres: postgresSource({
       url: process.env.SOURCE_PG_URL ?? "postgres://postgres:otter@localhost:5432/postgres",
-    },
-    clickhouse: {
-      kind: "clickhouse",
+    }),
+    clickhouse: clickhouseSource({
       url: process.env.CLICKHOUSE_URL ?? "http://otter:otter@localhost:8123",
-    },
-    stripe: {
-      kind: "stripe",
-      options: { apiKey: process.env.STRIPE_API_KEY },
-    },
+    }),
+    stripe: stripeSource({ apiKey: process.env.STRIPE_API_KEY }),
   },
   modelsDir: "models",
   seedsDir: "seeds",
