@@ -6,8 +6,8 @@ import { qualify, quote } from "./identifiers.ts";
 export { NotSupportedError };
 
 export function createAdapter(config: { url: string; schema?: string }): Adapter {
-  const sql = new SQL(config.url);
   const defaultSchema = config.schema ?? "public";
+  const sql = new SQL(config.url);
 
   function inferColumns(rows: Row[]): string[] {
     return rows[0] ? Object.keys(rows[0]) : [];
@@ -17,6 +17,13 @@ export function createAdapter(config: { url: string; schema?: string }): Adapter
     const colDefs = cols.map((c) => `${quote(c)} text`).join(", ");
     await sql.unsafe(`create schema if not exists ${quote(t.schema)}`);
     await sql.unsafe(`create table if not exists ${qualify(t)} (${colDefs})`);
+  }
+
+  async function ensureUniqueIndex(t: TableRef, uniqueKey: string): Promise<void> {
+    const index = `${t.name}__${uniqueKey}__otter_uq`;
+    await sql.unsafe(
+      `create unique index if not exists ${quote(index)} on ${qualify(t)} (${quote(uniqueKey)})`,
+    );
   }
 
   /** Escape a value for inline SQL literal (all columns are text). */
@@ -68,11 +75,14 @@ export function createAdapter(config: { url: string; schema?: string }): Adapter
       let total = 0;
       let firstBatch = true;
       if (strategy === "replace") {
-        await sql.unsafe(`drop table if exists ${qualify(t)}`);
+        await sql.unsafe(`drop table if exists ${qualify(t)} cascade`);
       }
       for await (const batch of rows) {
         if (firstBatch) {
           await ensureTable(t, inferColumns(batch));
+          if (strategy === "merge" && opts?.uniqueKey) {
+            await ensureUniqueIndex(t, opts.uniqueKey);
+          }
           firstBatch = false;
         }
         total += await insertBatch(t, batch, strategy, opts?.uniqueKey);
@@ -81,19 +91,33 @@ export function createAdapter(config: { url: string; schema?: string }): Adapter
     },
     async execute(query) {
       const started = performance.now();
-      await sql.unsafe(query);
-      return { duration_ms: performance.now() - started };
+      // Run with `search_path` set so bare identifiers emitted by ref()/seed()
+      // resolve against the target schema.
+      const rows = (await sql.begin(async (tx) => {
+        await tx.unsafe(`set local search_path to ${quote(defaultSchema)}, public`);
+        return (await tx.unsafe(query)) as Row[];
+      })) as Row[];
+      return { rows, duration_ms: performance.now() - started };
     },
     async swap(staging, final) {
+      const previous = { schema: final.schema, name: `${final.name}__old__otter` };
       await sql.begin(async (tx) => {
-        await tx.unsafe(`drop table if exists ${qualify(final)}`);
+        await tx.unsafe(`drop table if exists ${qualify(previous)}`);
+        await tx.unsafe(
+          `alter table if exists ${qualify(final)} rename to ${quote(previous.name)}`,
+        );
         await tx.unsafe(`alter table ${qualify(staging)} rename to ${quote(final.name)}`);
+        await tx.unsafe(`drop table if exists ${qualify(previous)}`);
       });
     },
     async mergeIncremental(opts: MergeIncrementalOpts) {
       const { staging, final, compiledSql, uniqueKey } = opts;
-      // Build staging table.
-      await sql.unsafe(`create table ${qualify(staging)} as ${compiledSql}`);
+      // Build staging table with `search_path` set so user SQL resolves
+      // bare identifiers against the target schema.
+      await sql.begin(async (tx) => {
+        await tx.unsafe(`set local search_path to ${quote(defaultSchema)}, public`);
+        await tx.unsafe(`create table ${qualify(staging)} as ${compiledSql}`);
+      });
       // Discover columns from information_schema.
       const colRows = (await sql`
         select column_name
@@ -115,6 +139,7 @@ export function createAdapter(config: { url: string; schema?: string }): Adapter
       await sql.unsafe(
         `create table if not exists ${qualify(final)} as select * from ${qualify(staging)} where false`,
       );
+      await ensureUniqueIndex(final, uniqueKey);
       await sql.unsafe(`
         insert into ${qualify(final)} (${colList})
         select ${colList} from ${qualify(staging)}

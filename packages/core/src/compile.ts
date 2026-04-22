@@ -17,7 +17,12 @@ export async function compileProject(config: Config, cwd: string): Promise<Manif
   const nodes: DagNode[] = [];
   for (const f of files) {
     const id = f.replace(/\.sql\.ts$/, "").replaceAll("/", "_");
-    const ctx = { deps: new Set<string>(), sources: new Set<string>(), currentModel: id };
+    const ctx = {
+      deps: new Set<string>(),
+      sources: new Set<string>(),
+      seeds: new Set<string>(),
+      currentModel: id,
+    };
     const mod = await withRecording(ctx, async () => {
       return (await import(`${cwd}/${config.modelsDir}/${f}`)) as {
         default: SqlFragment;
@@ -31,6 +36,7 @@ export async function compileProject(config: Config, cwd: string): Promise<Manif
       sql: mod.default.__sql,
       deps: [...ctx.deps],
       sources: [...ctx.sources],
+      seeds: [...ctx.seeds],
     });
   }
 

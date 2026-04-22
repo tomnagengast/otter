@@ -4,6 +4,7 @@ import { defineCommand } from "../argv.ts";
 export const compileCommand = defineCommand({
   name: "compile",
   summary: "Compile models into .otter/target/manifest.json",
+  usage: "[flags]",
   flags: { profile: { type: "string", default: "dev" } },
   async run() {
     const cwd = process.cwd();

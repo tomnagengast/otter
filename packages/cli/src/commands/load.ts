@@ -5,6 +5,7 @@ import { defineCommand } from "../argv.ts";
 export const loadCommand = defineCommand({
   name: "load",
   summary: "Extract from sources into the target",
+  usage: "[flags] <source>.<stream>",
   flags: {
     profile: { type: "string", default: "dev" },
     strategy: { type: "string", default: "append" },

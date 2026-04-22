@@ -1,12 +1,22 @@
-import { jsonlAppender, loadConfig, readManifest, resolveAdapter, runBuild } from "@otter/core";
+import {
+  discoverSeeds,
+  jsonlAppender,
+  loadConfig,
+  loadSeeds,
+  resolveAdapter,
+  runBuild,
+} from "@otter/core";
 import { defineCommand } from "../argv.ts";
+import { readCompiledManifest } from "../manifest.ts";
 
 export const buildCommand = defineCommand({
   name: "build",
-  summary: "Execute the compiled DAG",
+  summary: "Load seeds and execute the compiled DAG",
+  usage: "[flags]",
   flags: {
     profile: { type: "string", default: "dev" },
     select: { type: "string", short: "s" },
+    seed: { type: "boolean", default: false },
   },
   async run({ values }) {
     const cwd = process.cwd();
@@ -14,14 +24,33 @@ export const buildCommand = defineCommand({
     const profileName = values.profile as string;
     const profile = config.profiles[profileName];
     if (!profile) throw new Error(`unknown profile: ${profileName}`);
-    const manifest = await readManifest(`${cwd}/.otter/target/manifest.json`);
+    const manifest = values.seed ? null : await readCompiledManifest(cwd, "build");
     const { createAdapter } = await resolveAdapter(profile.target.kind);
-    const adapter = createAdapter(profile.target);
+    const schema = profile.target.schema ?? "analytics";
+    const adapter = createAdapter({ ...profile.target, schema });
+
+    const seedsDir = config.seedsDir ?? "seeds";
+    const seeds = await discoverSeeds(cwd, seedsDir);
+    if (seeds.length > 0) {
+      const { files } = await loadSeeds({ adapter, schema, seeds });
+      for (const f of files) {
+        console.log(`seeded ${schema}.${f.name} (${f.rows} rows, ${Math.round(f.duration_ms)}ms)`);
+      }
+    } else if (values.seed) {
+      console.log(`no seeds found in ${seedsDir}/`);
+    }
+
+    if (values.seed) {
+      await adapter.close();
+      return 0;
+    }
+    if (!manifest) throw new Error("internal error: build manifest missing");
+
     const { results, emitter } = await runBuild({
       manifest,
       adapter,
       selector: values.select as string | undefined,
-      schema: profile.target.schema ?? "analytics",
+      schema,
     });
     const flush = jsonlAppender(`${cwd}/.otter/target/events.jsonl`, emitter);
     await Bun.write(`${cwd}/.otter/target/run_results.json`, JSON.stringify(results, null, 2));

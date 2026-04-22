@@ -5,6 +5,7 @@ export interface DagNode {
   sql: string;
   deps: string[];
   sources: string[];
+  seeds: string[];
 }
 
 export type Dag = Map<string, DagNode>;

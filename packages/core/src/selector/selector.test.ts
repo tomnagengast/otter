@@ -10,6 +10,7 @@ const n = (id: string, deps: string[] = [], tags: string[] = []): DagNode => ({
   sql: "",
   deps,
   sources: [],
+  seeds: [],
 });
 
 const dag = buildDag([n("a"), n("b", ["a"]), n("c", ["b"], ["nightly"])]);

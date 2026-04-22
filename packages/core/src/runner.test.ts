@@ -36,6 +36,7 @@ const manifest: Manifest = {
       sql: "select 1",
       deps: [],
       sources: [],
+      seeds: [],
       compiled_sql: "select 1",
     },
     b: {
@@ -45,6 +46,7 @@ const manifest: Manifest = {
       sql: "select 2",
       deps: ["a"],
       sources: [],
+      seeds: [],
       compiled_sql: "select 2",
     },
   },

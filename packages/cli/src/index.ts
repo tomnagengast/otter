@@ -16,5 +16,14 @@ const COMMANDS = {
 } as const;
 
 export async function main(argv: string[]): Promise<number> {
-  return route(argv, COMMANDS);
+  try {
+    return await route(argv, COMMANDS);
+  } catch (error) {
+    console.error(formatCliError(error));
+    return 1;
+  }
+}
+
+function formatCliError(error: unknown): string {
+  return `error: ${error instanceof Error ? error.message : String(error)}`;
 }

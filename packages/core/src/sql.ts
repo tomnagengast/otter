@@ -3,6 +3,7 @@ import { AsyncLocalStorage } from "node:async_hooks";
 export interface RecordingContext {
   deps: Set<string>;
   sources: Set<string>;
+  seeds: Set<string>;
   currentModel: string;
 }
 
@@ -37,6 +38,13 @@ export function source(sourceName: string, stream: string): string {
   if (!ctx) throw new Error("source() called outside a recording context");
   ctx.sources.add(`${sourceName}.${stream}`);
   return quoteIdentifier(`raw_${sourceName}_${stream}`);
+}
+
+export function seed(name: string): string {
+  const ctx = als.getStore();
+  if (!ctx) throw new Error("seed() called outside a recording context");
+  ctx.seeds.add(name);
+  return quoteIdentifier(`seed_${name}`);
 }
 
 export function quoteIdentifier(name: string): string {

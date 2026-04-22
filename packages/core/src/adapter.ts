@@ -12,6 +12,7 @@ export interface LoadResult {
 
 export interface ExecuteResult {
   rows_affected?: number;
+  rows?: Row[];
   duration_ms: number;
 }
 

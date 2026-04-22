@@ -1,9 +1,11 @@
-import { loadConfig, readManifest, resolveAdapter } from "@otter/core";
+import { loadConfig, resolveAdapter } from "@otter/core";
 import { defineCommand } from "../argv.ts";
+import { readCompiledManifest } from "../manifest.ts";
 
 export const showCommand = defineCommand({
   name: "show",
   summary: "Preview rows from a materialized model",
+  usage: "[flags] <model>",
   flags: { profile: { type: "string", default: "dev" }, limit: { type: "string", default: "10" } },
   async run({ values, positionals }) {
     const [model] = positionals;
@@ -13,13 +15,15 @@ export const showCommand = defineCommand({
     const profileName = values.profile as string;
     const profile = config.profiles[profileName];
     if (!profile) throw new Error(`unknown profile: ${profileName}`);
-    const manifest = await readManifest(`${cwd}/.otter/target/manifest.json`);
+    const manifest = await readCompiledManifest(cwd, "show");
     if (!manifest.nodes[model]) throw new Error(`unknown model: ${model}`);
     const { createAdapter } = await resolveAdapter(profile.target.kind);
-    const adapter = createAdapter(profile.target);
     const schema = profile.target.schema ?? "analytics";
+    const adapter = createAdapter({ ...profile.target, schema });
     const limit = Number(values.limit);
-    await adapter.execute(`select * from "${schema}"."${model}" limit ${limit}`);
+    const result = await adapter.execute(`select * from "${schema}"."${model}" limit ${limit}`);
+    if (result.rows && result.rows.length > 0) console.table(result.rows);
+    else console.log("(no rows)");
     await adapter.close();
     return 0;
   },

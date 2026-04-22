@@ -1,10 +1,25 @@
 services:
   postgres:
-    image: postgres:16-alpine
+    image: postgres:18-alpine
     environment:
       POSTGRES_PASSWORD: otter
-      POSTGRES_DB: otter
-    ports: ["55432:5432"]
+      POSTGRES_DB: postgres
+    ports: ["5432:5432"]
+    volumes:
+      - ./scripts/init-postgres.sql:/docker-entrypoint-initdb.d/init.sql:ro
+
+  analytics:
+    image: postgres:18-alpine
+    environment:
+      POSTGRES_PASSWORD: otter
+      POSTGRES_DB: analytics
+    ports: ["5433:5432"]
+
   clickhouse:
-    image: clickhouse/clickhouse-server:24-alpine
-    ports: ["58123:8123"]
+    image: clickhouse/clickhouse-server:latest-alpine
+    environment:
+      CLICKHOUSE_USER: otter
+      CLICKHOUSE_PASSWORD: otter
+    ports: ["8123:8123"]
+    volumes:
+      - ./scripts/init-clickhouse.sql:/docker-entrypoint-initdb.d/init.sql:ro

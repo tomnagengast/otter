@@ -10,6 +10,7 @@ test("predicate references target max(cursor)", () => {
       sql: "",
       deps: [],
       sources: [],
+      seeds: [],
     },
     target: { schema: "s", name: "x" },
     cursor: "created_at",

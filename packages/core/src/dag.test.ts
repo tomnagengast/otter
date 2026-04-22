@@ -8,6 +8,7 @@ const n = (id: string, deps: string[] = []): DagNode => ({
   sql: "select 1",
   deps,
   sources: [],
+  seeds: [],
 });
 
 test("topo-sorts a linear chain", () => {
