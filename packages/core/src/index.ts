@@ -6,7 +6,13 @@ export type { Config, ProfileConfig, SourceConfig, TargetConfig } from "./config
 export { defineConfig, loadConfig } from "./config.ts";
 export type { Dag, DagNode } from "./dag.ts";
 export { buildDag, toposort } from "./dag.ts";
+export type { NodeEvent } from "./events.ts";
+export { jsonlAppender, OtterEmitter } from "./events.ts";
 export { readManifest, writeManifest } from "./manifest.ts";
+export type { RunBuildOpts, RunResults } from "./runner.ts";
+export { runBuild } from "./runner.ts";
+export { evaluate as evaluateSelector } from "./selector/evaluate.ts";
+export { parseSelector } from "./selector/parse.ts";
 export type { CursorState, Row, Source } from "./source.ts";
 export { resolveSource } from "./source.ts";
 export type { SqlFragment } from "./sql.ts";
