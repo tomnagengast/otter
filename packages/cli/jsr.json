@@ -1,9 +1,12 @@
 {
   "name": "@otter/cli",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "license": "MIT",
   "exports": {
     ".": "./src/index.ts",
     "./bin": "./src/bin.ts"
+  },
+  "imports": {
+    "@otter/core": "jsr:@otter/core@^0.1.1"
   }
 }
