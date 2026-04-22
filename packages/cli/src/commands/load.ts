@@ -1,4 +1,5 @@
-import { loadConfig, resolveAdapter, resolveSource } from "@otter/core";
+import { mkdirSync } from "node:fs";
+import { loadConfig, openState, resolveAdapter, resolveSource } from "@otter/core";
 import { defineCommand } from "../argv.ts";
 
 export const loadCommand = defineCommand({
@@ -21,22 +22,30 @@ export const loadCommand = defineCommand({
     const sourceConfig = config.sources[sourceName];
     if (!sourceConfig) throw new Error(`unknown source: ${sourceName}`);
 
+    // Ensure .otter/ directory exists for state.db.
+    mkdirSync(`${cwd}/.otter`, { recursive: true });
+    const state = openState(`${cwd}/.otter/state.db`);
+    const cursorState = {
+      get: (key: string) => state.getCursor(sourceName, key),
+      set: (key: string, value: string) => state.setCursor(sourceName, key, value),
+    };
+
     const { createSource } = await resolveSource(sourceConfig.kind);
     const { createAdapter } = await resolveAdapter(profile.target.kind);
     const src = createSource(sourceConfig);
     const adapter = createAdapter(profile.target);
 
     const started = performance.now();
-    const state = { get: () => undefined, set: () => {} };
     const target = { schema: profile.target.schema ?? "raw", name: `${sourceName}_${stream}` };
     const result = await adapter.bulkLoad(
       target,
-      src.extract(stream, state),
+      src.extract(stream, cursorState),
       values.strategy as "append" | "merge" | "replace",
       { uniqueKey: values["unique-key"] as string | undefined },
     );
     await src.close();
     await adapter.close();
+    state.close();
     console.log(
       `loaded ${result.rows} rows into ${target.schema}.${target.name} in ${Math.round(performance.now() - started)}ms`,
     );

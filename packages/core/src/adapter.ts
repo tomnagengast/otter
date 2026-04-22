@@ -19,6 +19,13 @@ export type LoadStrategy = "append" | "merge" | "replace";
 
 export class NotSupportedError extends Error {}
 
+export interface MergeIncrementalOpts {
+  staging: TableRef;
+  final: TableRef;
+  compiledSql: string;
+  uniqueKey: string;
+}
+
 export interface Adapter {
   kind: string;
   introspect(): Promise<{ tables: TableRef[] }>;
@@ -30,6 +37,8 @@ export interface Adapter {
   ): Promise<LoadResult>;
   execute(sql: string): Promise<ExecuteResult>;
   swap(staging: TableRef, final: TableRef): Promise<void>;
+  /** Optional: build staging from compiledSql, merge into final, drop staging. */
+  mergeIncremental?(opts: MergeIncrementalOpts): Promise<void>;
   close(): Promise<void>;
 }
 

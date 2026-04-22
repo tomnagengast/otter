@@ -38,6 +38,19 @@ export async function runBuild(opts: RunBuildOpts): Promise<{
         await opts.adapter.execute(
           `create or replace view "${final.schema}"."${final.name}" as ${node.sql}`,
         );
+      } else if (node.config.materialized === "incremental") {
+        if (!node.config.unique_key) throw new Error(`${id}: incremental requires unique_key`);
+        if (!opts.adapter.mergeIncremental) {
+          throw new Error(
+            `${opts.adapter.kind} adapter does not support incremental materialization`,
+          );
+        }
+        await opts.adapter.mergeIncremental({
+          staging,
+          final,
+          compiledSql: node.sql,
+          uniqueKey: node.config.unique_key,
+        });
       } else {
         await opts.adapter.execute(
           `create table "${staging.schema}"."${staging.name}" as ${node.sql}`,

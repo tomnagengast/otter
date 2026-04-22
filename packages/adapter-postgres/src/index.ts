@@ -1,4 +1,4 @@
-import type { Adapter, LoadStrategy, Row, TableRef } from "@otter/core";
+import type { Adapter, LoadStrategy, MergeIncrementalOpts, Row, TableRef } from "@otter/core";
 import { NotSupportedError } from "@otter/core";
 import { SQL } from "bun";
 import { qualify, quote } from "./identifiers.ts";
@@ -89,6 +89,38 @@ export function createAdapter(config: { url: string; schema?: string }): Adapter
         await tx.unsafe(`drop table if exists ${qualify(final)}`);
         await tx.unsafe(`alter table ${qualify(staging)} rename to ${quote(final.name)}`);
       });
+    },
+    async mergeIncremental(opts: MergeIncrementalOpts) {
+      const { staging, final, compiledSql, uniqueKey } = opts;
+      // Build staging table.
+      await sql.unsafe(`create table ${qualify(staging)} as ${compiledSql}`);
+      // Discover columns from information_schema.
+      const colRows = (await sql`
+        select column_name
+        from information_schema.columns
+        where table_schema = ${staging.schema} and table_name = ${staging.name}
+        order by ordinal_position
+      `) as { column_name: string }[];
+      const cols = colRows.map((r) => r.column_name);
+      if (cols.length === 0) {
+        await sql.unsafe(`drop table ${qualify(staging)}`);
+        return;
+      }
+      const colList = cols.map(quote).join(", ");
+      const updates = cols
+        .filter((c) => c !== uniqueKey)
+        .map((c) => `${quote(c)} = excluded.${quote(c)}`)
+        .join(", ");
+      // Ensure the final table exists before we try to merge into it.
+      await sql.unsafe(
+        `create table if not exists ${qualify(final)} as select * from ${qualify(staging)} where false`,
+      );
+      await sql.unsafe(`
+        insert into ${qualify(final)} (${colList})
+        select ${colList} from ${qualify(staging)}
+        on conflict (${quote(uniqueKey)}) do update set ${updates}
+      `);
+      await sql.unsafe(`drop table ${qualify(staging)}`);
     },
     async close() {
       await sql.end();
