@@ -22,16 +22,38 @@ export interface CursorState {
   set(key: string, value: string): void;
 }
 
+export interface ExtractOpts {
+  /** Column to filter on / track the high-water mark for incremental loads. */
+  cursorField?: string;
+  /** Lower bound for the cursor when state has no prior value. */
+  initialValue?: string;
+  /** Optional upstream schema (e.g. postgres namespace). */
+  schema?: string;
+  /** Optional upstream identifier when it differs from `stream`. */
+  identifier?: string;
+}
+
+export interface ExtractStream {
+  /** Target (Postgres) column types, keyed by column name. */
+  columnTypes: Record<string, string>;
+  rows: AsyncIterable<Row[]>;
+}
+
 export interface Source {
   kind: string;
-  extract(stream: string, state: CursorState): AsyncIterable<Row[]>;
+  extract(stream: string, state: CursorState, opts?: ExtractOpts): Promise<ExtractStream>;
   close(): Promise<void>;
 }
 ```
 
 - `kind` mirrors the string used in `config.sources.<name>.kind`.
-- `extract` yields rows in batches (typically 5 000 per batch).
+- `extract` returns `columnTypes` (used by the adapter to `CREATE TABLE` with real types instead
+  of `text`) and a `rows` async iterable that yields batches (typically 5 000 per batch).
 - `close` releases any sockets or handles the driver owns.
+
+`ExtractOpts` is derived from the per-stream config in `sourcesDir/<name>.ts`
+([`defineSource`](configuration.md#sourceconfig)) and from the CLI flags passed to
+`otter load`.
 
 ## Driver Resolution
 
@@ -54,10 +76,11 @@ Any package that matches the `@otter/source-<kind>` naming convention and export
 ## Streams and Cursors
 
 - `stream` is a free-form string that the driver interprets. Postgres accepts
-  `"schema.table"` or bare `"table"`. ClickHouse accepts the raw table name.
-- `CursorState` is backed by `.otter/state.db`. It is keyed by `(source_name, stream)` and is
-  intended for resumable / incremental extraction. Today's drivers treat it as opaque; future
-  drivers (API sources especially) will persist page tokens there.
+  `"schema.table"` or bare `"table"`. ClickHouse accepts the raw table name. Stripe treats it as
+  a `/v1/<stream>` list resource.
+- `CursorState` is backed by `.otter/state.db`. It is keyed by `(source_name, stream)`. Drivers
+  write a high-water mark under the key `"<stream>:<cursor_field>"` when `cursor_field` is set
+  in `sourcesDir/<name>.ts`. `--full-refresh` on `otter load` clears the key before extract.
 
 See [state.md](state.md#cursors) for the on-disk schema.
 

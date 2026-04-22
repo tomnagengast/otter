@@ -10,6 +10,7 @@ rebuild from scratch — nothing under `.otter/` is a source of truth.
 - [Cursors](#cursors)
 - [Manifest](#manifest)
 - [Run Results](#run-results)
+- [Test Results](#test-results)
 - [Events JSONL](#events-jsonl)
 - [Retention and Cleanup](#retention-and-cleanup)
 
@@ -21,9 +22,10 @@ rebuild from scratch — nothing under `.otter/` is a source of truth.
 ├── compiled/           # per-model compiled SQL, mirrors models/ tree
 │   └── models/…/x.sql
 └── target/
-    ├── manifest.json   # DAG + compiled SQL per node
-    ├── run_results.json # last build summary
-    └── events.jsonl    # append-only event log (one JSON object per line)
+    ├── manifest.json    # DAG + compiled SQL per node
+    ├── run_results.json # last build summary (model execution)
+    ├── test_results.json # last build summary (column tests)
+    └── events.jsonl     # append-only event log (one JSON object per line)
 ```
 
 - `state.db` is created on first `otter load` and is persistent across commands.
@@ -109,6 +111,28 @@ interface RunResults {
 
 One entry per executed node. Nodes skipped by a selector are omitted. A single failure
 short-circuits the build (the runner re-throws), so later nodes may be absent.
+
+## Test Results
+
+Written at the end of `otter build` after model execution succeeds, capturing every column test
+declared via `{{ config(columns: { ... }) }}`:
+
+```typescript
+interface TestResults {
+  tests: Array<{
+    model: string;
+    column: string;
+    test: "unique" | "not_null";
+    status: "pass" | "fail" | "error";
+    duration_ms: number;
+    failures?: number; // row count when status is "fail"
+    error?: string; // error message when status is "error"
+  }>;
+}
+```
+
+If any test is `fail` or `error`, `otter build` exits non-zero. See
+[models.md](models.md#column-tests).
 
 ## Events JSONL
 

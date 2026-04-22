@@ -85,15 +85,17 @@ table is populated. The Postgres adapter implements it as:
 
 ```sql
 BEGIN;
+DROP TABLE IF EXISTS "<schema>"."<final>__old__otter" CASCADE;
 ALTER TABLE IF EXISTS "<schema>"."<final>" RENAME TO "<final>__old__otter";
 ALTER TABLE "<schema>"."<staging>" RENAME TO "<final>";
-DROP TABLE IF EXISTS "<schema>"."<final>__old__otter";
+DROP TABLE IF EXISTS "<schema>"."<final>__old__otter" CASCADE;
 COMMIT;
 ```
 
-The rename-first step avoids Postgres catalog collisions when replacing an existing table with a
-same-named staging table inside one transaction. The whole swap is still single-transaction: a
-concurrent reader either sees the old table or the new table, never neither.
+The leading drop clears any stray `__old__otter` left by a prior failed swap. The rename-first
+step avoids Postgres catalog collisions when replacing an existing table with a same-named
+staging table inside one transaction. The whole swap is still single-transaction: a concurrent
+reader either sees the old table or the new table, never neither.
 
 ## Example
 

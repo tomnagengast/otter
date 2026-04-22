@@ -8,6 +8,7 @@ SQL body with optional calls to `config`, `ref`, `source`, and `seed`.
 - [File Layout](#file-layout)
 - [Model API](#model-api)
 - [Materializations](#materializations)
+- [Column Tests](#column-tests)
 - [Dependencies and DAG](#dependencies-and-dag)
 - [Example](#example)
 
@@ -45,11 +46,12 @@ Models use four templating calls, all wrapped in `{{ ... }}`.
 Zero or one `config` block per model. The body is a JavaScript object literal (unquoted keys,
 trailing commas, `//` comments all fine). The block is stripped from the compiled SQL.
 
-| Field          | Type                                 | Default | Description                                 |
-| -------------- | ------------------------------------ | ------- | ------------------------------------------- |
-| `materialized` | `"view" \| "table" \| "incremental"` | `view`  | Build strategy for the model                |
-| `unique_key`   | `string`                             | —       | Required when `materialized: "incremental"` |
-| `tags`         | `string[]`                           | —       | Labels used by selectors (`tag:<name>`)     |
+| Field          | Type                                   | Default | Description                                                                                        |
+| -------------- | -------------------------------------- | ------- | -------------------------------------------------------------------------------------------------- |
+| `materialized` | `"view" \| "table" \| "incremental"`   | `view`  | Build strategy for the model                                                                       |
+| `unique_key`   | `string`                               | —       | Required when `materialized: "incremental"`                                                        |
+| `tags`         | `string[]`                             | —       | Labels used by selectors (`tag:<name>`)                                                            |
+| `columns`      | `Record<string, { tests?: string[] }>` | —       | Column-level metadata; `tests` declares checks run after build (see [Column Tests](#column-tests)) |
 
 ### `{{ ref("name") }}`
 
@@ -81,8 +83,35 @@ by `otter build --seed`.
 ## Materializations
 
 Otter supports three materializations: `view`, `table`, and `incremental`. See
-[materializations.md](materializations.md) for semantics, swap behavior, and the incremental
-predicate helper.
+[materializations.md](materializations.md) for semantics and swap behavior.
+
+## Column Tests
+
+Models can declare column-level assertions in `config.columns`. After a successful `otter build`,
+every declared test runs against the materialized relation and results are written to
+`.otter/target/test_results.json` ([state.md](state.md#test-results)).
+
+```sql
+{{ config(
+  materialized: "table",
+  columns: {
+    id:    { tests: ["unique", "not_null"] },
+    email: { tests: ["not_null"] },
+  }
+) }}
+
+select id, email, created_at from {{ source("stripe_pg", "users") }}
+```
+
+Supported tests:
+
+| Test       | SQL                                                                               | Fails when                       |
+| ---------- | --------------------------------------------------------------------------------- | -------------------------------- |
+| `not_null` | `select count(*) from <model> where <column> is null`                             | Any row has `NULL` in the column |
+| `unique`   | `select count(*) from (... group by <column> having count(*) > 1)` (ignores NULL) | Duplicate non-null values exist  |
+
+Any `fail` or `error` result causes `otter build` to exit non-zero. Tests respect the current
+selector — tests for models outside the selection are skipped.
 
 ## Dependencies and DAG
 

@@ -39,20 +39,29 @@ All commands resolve `otter.config.ts` from the current working directory.
 ## load
 
 ```
-otter load [--profile <name>] [--strategy append|merge|replace] [--unique-key <col>] <source>.<stream>
+otter load [flags] [<source>.<stream>]
 ```
 
 Extracts rows from `<source>.<stream>` and writes them into the target's raw schema as
-`<schema>.<source>_<stream>` (default raw schema: `raw`).
+`<schema>.raw_<source>_<stream>` (default raw schema: `raw`). If `<source>.<stream>` is omitted,
+otter discovers streams from `sourcesDir/*.ts` (`defineSource`) and from `source()` references in
+compiled models, and loads each one.
 
-| Flag           | Type   | Default  | Description                                    |
-| -------------- | ------ | -------- | ---------------------------------------------- |
-| `--profile`    | string | `dev`    | Profile key from `otter.config.ts`             |
-| `--strategy`   | string | `append` | Load strategy: `append`, `merge`, or `replace` |
-| `--unique-key` | string | —        | Required for `merge`; column used for upsert   |
+| Flag             | Type    | Default | Description                                                                    |
+| ---------------- | ------- | ------- | ------------------------------------------------------------------------------ |
+| `--profile`      | string  | `dev`   | Profile key from `otter.config.ts`                                             |
+| `--strategy`     | string  | —       | Override write strategy: `append`, `merge`, or `replace`                       |
+| `--unique-key`   | string  | —       | Required for `merge` when `primary_key` is not declared in `sources/*.ts`      |
+| `--full-refresh` | boolean | `false` | Shortcut for `--strategy replace`; also clears the stream's incremental cursor |
+
+When `--strategy` is omitted, otter falls back to the stream's declared `write_disposition`
+(from `defineSource()`), then to `append`. `--unique-key` defaults to the stream's declared
+`primary_key`.
 
 ```bash
 otter load stripe_pg.charges --strategy merge --unique-key id
+otter load stripe.customers --full-refresh
+otter load                                    # discover all streams
 ```
 
 See [load-strategies.md](load-strategies.md) for strategy semantics and
@@ -83,39 +92,45 @@ authoring.
 otter build [--profile <name>] [-s <selector>] [--seed]
 ```
 
-Reads the compiled manifest and executes every selected node topologically.
+Compiles the project, loads any CSV seeds from `seedsDir/`, executes every selected node
+topologically, then runs column tests declared in `{{ config(columns: { ... }) }}` blocks.
 
 | Flag           | Type    | Default | Description                                        |
 | -------------- | ------- | ------- | -------------------------------------------------- |
 | `--profile`    | string  | `dev`   | Profile key from `otter.config.ts`                 |
 | `-s, --select` | string  | —       | Selector expression (e.g. `+model`, `tag:nightly`) |
-| `--seed`       | boolean | `false` | Run seeds only; skip model execution               |
+| `--seed`       | boolean | `false` | Run seeds only; skip model execution and tests     |
 
 ```bash
 otter build
 otter build -s +dim_users
 otter build -s tag:nightly
+otter build --seed
 ```
 
-On completion, writes `.otter/target/run_results.json` and appends to
-`.otter/target/events.jsonl`. See [selectors.md](selectors.md) and
-[materializations.md](materializations.md).
+On completion, writes `.otter/target/run_results.json`, `.otter/target/test_results.json`, and
+appends to `.otter/target/events.jsonl`. Exit status is non-zero if any node fails or any column
+test fails. See [selectors.md](selectors.md), [materializations.md](materializations.md), and
+[models.md](models.md#column-tests).
 
 ## list
 
 ```
-otter list <models|sources|seeds>
+otter list [models|sources|seeds]
 ```
 
-Enumerates one category.
+Enumerates one category, or all three when called without an argument.
 
 - `models` — node ids from `.otter/target/manifest.json` (run `otter compile` first).
-- `sources` — keys from `config.sources`.
+- `sources` — keys from `config.sources`; each declared stream is printed with its
+  `write_disposition`, `primary_key`, and incremental cursor (from `sourcesDir/*.ts`).
 - `seeds` — files discovered under `seedsDir`.
 
 ```bash
+otter list                # all three groups
 otter list models
 otter list sources
+otter list seeds
 ```
 
 ## show

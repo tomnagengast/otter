@@ -69,7 +69,23 @@ Use `identifier` to override the path when the stream name should differ from th
 
 `cursor_field` defaults to `created` when a stream declares `incremental` without one. State
 stores the max unix timestamp seen; the next run sends `created[gt]=<cursor>` so you only fetch
-new records.
+new records. Use `initial_value` (a unix timestamp as a string) to seed the cursor the first
+time a stream runs — useful to backfill from a specific point rather than the beginning of time.
+
+```typescript
+streams: {
+  charges: {
+    write_disposition: "append",
+    incremental: {
+      cursor_field: "created",
+      initial_value: "1704067200",  // 2024-01-01 UTC
+    },
+  },
+},
+```
+
+Pass `--full-refresh` to `otter load` to clear the stored cursor and restart from
+`initial_value` (or the beginning if none is set).
 
 ```bash
 otter load stripe.customers --strategy merge --unique-key id
