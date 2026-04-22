@@ -7,34 +7,34 @@ into a unified analytics database, with staging models and a combined activity v
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────────┐
-│ Sources                                                                      │
+│ Sources                                                                     │
 ├─────────────────────────────────────────────────────────────────────────────┤
-│  postgres:5432/postgres         clickhouse:8123/default                      │
-│  ├── customers                  └── events                                   │
-│  └── orders                                                                  │
+│  postgres:5432/postgres            clickhouse:8123/default                  │
+│  ├── customers                     └── events                               │
+│  └── orders                                                                 │
 └──────────────────────┬──────────────────────────────────────┬───────────────┘
                        │ otter load                           │
                        ▼                                      ▼
 ┌─────────────────────────────────────────────────────────────────────────────┐
-│ Target: analytics:5433/analytics                                             │
+│ Target: analytics:5433/analytics  (schema: analytics)                       │
 ├─────────────────────────────────────────────────────────────────────────────┤
-│ raw.postgres_customers    raw.postgres_orders    raw.clickhouse_events      │
+│ raw_postgres_customers   raw_postgres_orders   raw_clickhouse_events        │
 └──────────────────────┬──────────────────────────────────────┬───────────────┘
                        │ otter build                          │
                        ▼                                      ▼
-┌─────────────────────────────────────────────────────────────────────────────┐
-│ analytics schema                                                             │
-├─────────────────────────────────────────────────────────────────────────────┤
-│ staging/                                                                     │
-│   stg_postgres_customers (view)                                              │
-│   stg_postgres_orders (view)                                                 │
-│   stg_clickhouse_events (view)                                               │
-│                                                                              │
-│ models/                                                                      │
-│   customers (table)           ← refs stg_postgres_customers                  │
-│   customer_order_counts (view)← refs customers + stg_postgres_orders         │
-│   customer_activity (table)   ← refs customers + orders + events             │
-└─────────────────────────────────────────────────────────────────────────────┘
+┌────────────────────────────────────────────────────────────────────────────────┐
+│ analytics schema (same db)                                                     │
+├────────────────────────────────────────────────────────────────────────────────┤
+│ staging/                                                                       │
+│   staging_stg_postgres_customers (view)                                        │
+│   staging_stg_postgres_orders (view)                                           │
+│   staging_stg_clickhouse_events (view)                                         │
+│                                                                                │
+│ models/                                                                        │
+│   customers (table)             ← refs staging_stg_postgres_customers          │
+│   customer_order_counts (view)  ← refs customers + staging_stg_postgres_orders │
+│   customer_activity (table)     ← refs customers + orders + events             │
+└────────────────────────────────────────────────────────────────────────────────┘
 ```
 
 ## Layout
@@ -66,11 +66,13 @@ From the repo root:
 docker compose -f docker-compose.test.yml up -d
 ```
 
-This starts:
+This starts three services:
 
-- `postgres:5432` - Source Postgres with customers and orders tables (preloaded)
-- `analytics:5433` - Target Postgres for analytics
-- `clickhouse:8123` - Source ClickHouse with events table (preloaded)
+- `postgres:5432` — **Source** Postgres with `customers` + `orders` tables (preloaded via
+  `scripts/init-postgres.sql`)
+- `analytics:5433` — **Target** Postgres for landed raw data + built models
+- `clickhouse:8123` — **Source** ClickHouse with an `events` table (preloaded via
+  `scripts/init-clickhouse.sql`)
 
 ## 2. Load source data into the analytics database
 
@@ -79,15 +81,30 @@ From `examples/basic/`:
 ```bash
 cd examples/basic
 
-# Load customers from postgres.public.customers → analytics.raw.postgres_customers
+# Run every loader discovered from source() references in the models.
+bun cli load --strategy replace
+```
+
+Or target a single stream:
+
+```bash
+# postgres.customers → analytics.raw_postgres_customers
 bun cli load postgres.customers --strategy replace
 
-# Load orders from postgres.public.orders → analytics.raw.postgres_orders
+# postgres.orders → analytics.raw_postgres_orders
 bun cli load postgres.orders --strategy replace
 
-# Load events from clickhouse.default.events → analytics.raw.clickhouse_events
-bun cli load clickhouse.default.events --strategy replace
+# clickhouse.events (database: default) → analytics.raw_clickhouse_events
+bun cli load clickhouse.events --strategy replace
 ```
+
+Each `otter load <source>.<stream>` command lands rows into
+`<target.schema>.raw_<source>_<stream>`. With `target.schema = "analytics"` (set in
+`otter.config.ts`), all raw tables share the analytics schema.
+
+When the positional is omitted, `otter load` compiles the project, collects
+unique `source(<name>, <stream>)` references across every model, and runs each
+one with the same `--strategy` and `--unique-key` flags.
 
 ## 3. Compile and build models
 
@@ -95,7 +112,7 @@ bun cli load clickhouse.default.events --strategy replace
 # Compile models into .otter/target/manifest.json
 bun cli compile
 
-# Execute the DAG
+# Execute the DAG (creates views + tables in analytics schema)
 bun cli build
 
 # Preview the unified customer activity
@@ -116,13 +133,13 @@ customer_id | name    | email               | order_count | total_spent | event_
 ## 4. Explore
 
 ```bash
-# List all models
+# List all models (topo order)
 bun cli list models
 
-# List all sources
+# List configured sources
 bun cli list sources
 
-# Run only customer_activity and its dependencies
+# Run only customer_activity and its ancestors
 bun cli build -s +customer_activity
 
 # Reset compiled artifacts
@@ -131,19 +148,39 @@ bun cli clean
 
 ## How loaders work
 
-1. `otter load <source>.<stream>` extracts rows from a configured source and loads them
-   into the target database under the `raw` schema with naming `<source>_<stream>`.
+1. `otter load <source>.<stream>` resolves `<source>` against `sources` in
+   `otter.config.ts`, opens the source driver (`@otter/source-postgres` or
+   `@otter/source-clickhouse`), extracts rows, and writes them to
+   `<target.schema>.raw_<source>_<stream>` via the target adapter.
 
-2. Staging models use `source("postgres", "customers")` to reference the raw loaded tables.
-   This resolves to the identifier `raw_postgres_customers`.
+2. Staging models reference raw tables with the `source()` helper:
 
-3. Downstream models use `ref("staging_stg_postgres_customers")` to depend on staging views.
+   ```ts
+   import { source, sql } from "@otter/core";
+   export default sql`select * from ${source("postgres", "customers")}`;
+   ```
 
-4. The unified `customer_activity` model combines data from both Postgres (customers, orders)
-   and ClickHouse (events) sources into a single denormalized table.
+   `source("postgres", "customers")` compiles to the identifier
+   `"raw_postgres_customers"`. The postgres adapter sets `search_path` to the
+   target schema during `execute`, so the unqualified identifier resolves to
+   `analytics.raw_postgres_customers`.
+
+3. Downstream models reference compiled models with `ref()`. Because models
+   live in subdirectories, their IDs are path-prefixed with `_`:
+
+   ```ts
+   // models/staging/stg_postgres_customers.sql.ts
+   // → id: staging_stg_postgres_customers
+
+   ref("staging_stg_postgres_customers");
+   ```
+
+4. `customer_activity` fans in `staging_stg_postgres_orders` and
+   `staging_stg_clickhouse_events` and joins them onto `customers` to produce a
+   single denormalized table.
 
 ## Load strategies
 
-- `--strategy replace` - Drop and recreate the target table (default for initial loads)
-- `--strategy append` - Insert new rows (good for incremental)
-- `--strategy merge --unique-key id` - Upsert based on unique key (deduplication)
+- `--strategy replace` — drop + recreate the raw table (default for initial loads)
+- `--strategy append` — insert new rows (good for simple incremental loads)
+- `--strategy merge --unique-key id` — upsert by unique key (dedupes)

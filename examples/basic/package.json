@@ -1,5 +1,5 @@
 {
-  "name": "@otter/example-basic",
+  "name": "@otter/example",
   "private": true,
   "packageManager": "bun@1.3.11",
   "scripts": {
