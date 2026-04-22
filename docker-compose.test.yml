@@ -1,0 +1,10 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_PASSWORD: otter
+      POSTGRES_DB: otter
+    ports: ["55432:5432"]
+  clickhouse:
+    image: clickhouse/clickhouse-server:24-alpine
+    ports: ["58123:8123"]
