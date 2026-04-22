@@ -1,0 +1,34 @@
+{
+  "name": "otter",
+  "private": true,
+  "packageManager": "bun@1.3.11",
+  "engines": {
+    "node": "24"
+  },
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {
+    "cli": "cd packages/cli && bun dev",
+    "check": "biome check && prettier --check .",
+    "check:fix": "biome check --write && prettier --write .",
+    "format": "biome format --write && prettier --write .",
+    "format:md": "prettier --write .",
+    "lint": "biome lint",
+    "lint:fix": "biome lint --write",
+    "hooks": "prek run --all-files",
+    "clean": "rm -rf {,packages/*/}{dist,out,coverage,*.tsbuildinfo}",
+    "clean:deps": "rm -rf {,packages/*/}node_modules"
+  },
+  "peerDependencies": {
+    "typescript": "^5"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "@biomejs/biome": "^2.4.12",
+    "@j178/prek": "^0.3.10",
+    "@types/bun": "latest",
+    "@typescript/native-preview": "^7.0.0-dev.20260422.1",
+    "prettier": "^3.8.3"
+  }
+}

@@ -1,0 +1,13 @@
+# Biome handles all code/config — Prettier is scoped to markdown only.
+# Ignore everything, re-allow markdown + directory traversal.
+*
+!*.md
+!*.mdx
+!*/
+
+# Re-ignore build/dep dirs so traversal skips them.
+# (node_modules and .git are auto-ignored by Prettier.)
+dist
+out
+coverage
+.cache
