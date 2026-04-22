@@ -1,14 +1,8 @@
 {
-  "name": "@otter/cli",
-  "version": "0.0.0",
+  "name": "@otter/source-postgres",
   "module": "src/index.ts",
   "type": "module",
-  "bin": {
-    "otter": "./src/bin.ts"
-  },
-  "scripts": {
-    "dev": "bun src/bin.ts"
-  },
+  "private": true,
   "dependencies": {
     "@otter/core": "workspace:*"
   },

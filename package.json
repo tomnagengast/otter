@@ -9,13 +9,16 @@
     "packages/*"
   ],
   "scripts": {
-    "cli": "cd packages/cli && bun dev",
+    "cli": "bun --filter '@otter/cli' dev",
     "check": "biome check && prettier --check .",
     "check:fix": "biome check --write && prettier --write .",
     "format": "biome format --write && prettier --write .",
     "format:md": "prettier --write .",
     "lint": "biome lint",
     "lint:fix": "biome lint --write",
+    "typecheck": "tsgo --noEmit",
+    "test": "bun test",
+    "ci": "bun run check && bun run typecheck && bun run test",
     "hooks": "prek run --all-files",
     "clean": "rm -rf {,packages/*/}{dist,out,coverage,*.tsbuildinfo}",
     "clean:deps": "rm -rf {,packages/*/}node_modules"
