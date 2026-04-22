@@ -1,6 +1,7 @@
 import { loadConfig, resolveAdapter } from "@otter/core";
 import { defineCommand } from "../argv.ts";
 import { readCompiledManifest } from "../manifest.ts";
+import { theme } from "../ui.ts";
 
 export const showCommand = defineCommand({
   name: "show",
@@ -23,7 +24,7 @@ export const showCommand = defineCommand({
     const limit = Number(values.limit);
     const result = await adapter.execute(`select * from "${schema}"."${model}" limit ${limit}`);
     if (result.rows && result.rows.length > 0) console.table(result.rows);
-    else console.log("(no rows)");
+    else console.log(theme.muted("(no rows)"));
     await adapter.close();
     return 0;
   },

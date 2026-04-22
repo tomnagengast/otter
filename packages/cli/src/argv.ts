@@ -1,4 +1,5 @@
 import { type ParseArgsConfig, parseArgs } from "node:util";
+import { theme } from "./ui.ts";
 
 type CommandFlags = NonNullable<ParseArgsConfig["options"]>;
 
@@ -40,20 +41,25 @@ export async function route(argv: string[], commands: Record<string, Command>): 
 }
 
 function printRootHelp(commands: Record<string, Command>): void {
-  console.log("usage: otter <command> [flags]\n\ncommands:");
+  console.log("usage: otter <command> [flags]");
+  console.log("");
+  console.log(theme.heading("commands"));
   for (const c of Object.values(commands)) {
-    console.log(`  ${c.name.padEnd(10)} ${c.summary}`);
+    console.log(`  ${theme.info(c.name.padEnd(10))} ${theme.dim(c.summary)}`);
   }
-  console.log("\nuse 'otter <command> --help' for command-specific usage");
+  console.log("");
+  console.log(theme.dim("use 'otter <command> --help' for command-specific usage"));
 }
 
 function printCommandHelp(cmd: Command): void {
   const usage = cmd.usage ? ` ${cmd.usage}` : "";
-  console.log(`usage: otter ${cmd.name}${usage}\n`);
-  console.log(cmd.summary);
+  console.log(`usage: otter ${cmd.name}${usage}`);
+  console.log("");
+  console.log(theme.dim(cmd.summary));
   const flags = formatFlags(cmd);
   if (flags.length === 0) return;
-  console.log("\nflags:");
+  console.log("");
+  console.log(theme.heading("flags"));
   for (const flag of flags) {
     console.log(`  ${flag}`);
   }

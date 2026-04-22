@@ -1,5 +1,6 @@
 import { compileProject, loadConfig, writeCompiledSql, writeManifest } from "@otter/core";
 import { defineCommand } from "../argv.ts";
+import { count, theme } from "../ui.ts";
 
 export const compileCommand = defineCommand({
   name: "compile",
@@ -12,7 +13,7 @@ export const compileCommand = defineCommand({
     const manifest = await compileProject(config, cwd);
     await writeManifest(`${cwd}/.otter/target/manifest.json`, manifest);
     await writeCompiledSql(manifest, cwd);
-    console.log(`compiled ${manifest.order.length} nodes`);
+    console.log(`${theme.success("compiled")} ${count(manifest.order.length, "nodes")}`);
     return 0;
   },
 });
