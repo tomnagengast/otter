@@ -34,7 +34,7 @@ export interface Adapter {
     target: TableRef,
     rows: AsyncIterable<Row[]>,
     strategy: LoadStrategy,
-    opts?: { uniqueKey?: string },
+    opts?: { uniqueKey?: string; columnTypes?: Record<string, string> },
   ): Promise<LoadResult>;
   execute(sql: string): Promise<ExecuteResult>;
   swap(staging: TableRef, final: TableRef): Promise<void>;

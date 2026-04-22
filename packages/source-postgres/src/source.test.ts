@@ -9,12 +9,12 @@ test.skipIf(skip)("extracts rows from a postgres table in batches", async () => 
   const source = createSource({ url: url! });
   // information_schema.schemata always exists in Postgres
   const batches: Record<string, unknown>[][] = [];
-  for await (const batch of source.extract("information_schema.schemata", {
+  const { columnTypes, rows } = await source.extract("information_schema.schemata", {
     get: () => undefined,
     set: () => {},
-  })) {
-    batches.push(batch);
-  }
+  });
+  for await (const batch of rows) batches.push(batch);
+  expect(Object.keys(columnTypes).length).toBeGreaterThan(0);
   expect(batches.length).toBeGreaterThan(0);
   expect(batches[0]?.length).toBeGreaterThan(0);
   await source.close();

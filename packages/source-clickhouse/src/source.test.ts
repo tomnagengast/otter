@@ -6,12 +6,16 @@ const skip = !url;
 
 test("extract forwards URL credentials as basic auth", async () => {
   let auth: string | null = null;
-  let query = "";
+  const queries: string[] = [];
   const server = Bun.serve({
     port: 0,
     async fetch(req) {
       auth = req.headers.get("authorization");
-      query = await req.text();
+      const body = await req.text();
+      queries.push(body);
+      if (body.startsWith("DESCRIBE")) {
+        return new Response('{"name":"id","type":"UInt64"}\n');
+      }
       return new Response('{"id":"1"}\n{"id":"2"}\n');
     },
   });
@@ -21,13 +25,14 @@ test("extract forwards URL credentials as basic auth", async () => {
     const batches: Record<string, unknown>[][] = [];
     const noop = { get: () => undefined, set: () => {} };
 
-    for await (const batch of src.extract("system.numbers", noop)) {
-      batches.push(batch);
-    }
+    const { columnTypes, rows } = await src.extract("system.numbers", noop);
+    for await (const batch of rows) batches.push(batch);
 
     expect(auth).not.toBeNull();
     expect(auth ?? "").toBe(`Basic ${Buffer.from("otter:secret").toString("base64")}`);
-    expect(query).toBe("SELECT * FROM `system`.`numbers` FORMAT JSONEachRow");
+    expect(queries[0]).toBe("DESCRIBE TABLE `system`.`numbers` FORMAT JSONEachRow");
+    expect(queries[1]).toBe("SELECT * FROM `system`.`numbers` FORMAT JSONEachRow");
+    expect(columnTypes).toEqual({ id: "bigint" });
     expect(batches).toEqual([[{ id: "1" }, { id: "2" }]]);
 
     await src.close();
@@ -41,7 +46,8 @@ test.skipIf(skip)("streams rows from a known clickhouse table", async () => {
   const src = createSource({ url: url! });
   let total = 0;
   const noop = { get: () => undefined, set: () => {} };
-  for await (const batch of src.extract("system.numbers", noop)) {
+  const { rows } = await src.extract("system.numbers", noop);
+  for await (const batch of rows) {
     total += batch.length;
     if (total >= 10) break;
   }

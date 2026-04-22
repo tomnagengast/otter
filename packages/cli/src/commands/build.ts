@@ -1,18 +1,25 @@
 import {
+  buildDag,
+  compileProject,
   discoverSeeds,
+  evaluateSelector,
   jsonlAppender,
   loadConfig,
   loadSeeds,
   OtterEmitter,
+  parseSelector,
   resolveAdapter,
   runBuild,
+  runModelTests,
+  writeCompiledSql,
+  writeManifest,
 } from "@otter/core";
 import { defineCommand } from "../argv.ts";
-import { readCompiledManifest } from "../manifest.ts";
+import { count, duration, rel, SEP, status, theme } from "../ui.ts";
 
 export const buildCommand = defineCommand({
   name: "build",
-  summary: "Load seeds and execute the compiled DAG",
+  summary: "Compile, seed, build models, and run model tests",
   usage: "[flags]",
   flags: {
     profile: { type: "string", default: "dev" },
@@ -25,50 +32,103 @@ export const buildCommand = defineCommand({
     const profileName = values.profile as string;
     const profile = config.profiles[profileName];
     if (!profile) throw new Error(`unknown profile: ${profileName}`);
-    const manifest = values.seed ? null : await readCompiledManifest(cwd, "build");
     const { createAdapter } = await resolveAdapter(profile.target.kind);
     const schema = profile.target.schema ?? "analytics";
     const adapter = createAdapter({ ...profile.target, schema });
+
+    const manifest = await compileProject(config, cwd);
+    await writeManifest(`${cwd}/.otter/target/manifest.json`, manifest);
+    await writeCompiledSql(manifest, cwd);
+    console.log(`${theme.success("compiled")} ${count(manifest.order.length, "nodes")}`);
 
     const seedsDir = config.seedsDir ?? "seeds";
     const seeds = await discoverSeeds(cwd, seedsDir);
     if (seeds.length > 0) {
       const { files } = await loadSeeds({ adapter, schema, seeds });
       for (const f of files) {
-        console.log(`seeded ${schema}.${f.name} (${f.rows} rows, ${Math.round(f.duration_ms)}ms)`);
+        console.log(
+          status(
+            "seed",
+            rel(f.name, schema),
+            `${count(f.rows, "rows")} ${SEP} ${duration(f.duration_ms)}`,
+          ),
+        );
       }
     } else if (values.seed) {
-      console.log(`no seeds found in ${seedsDir}/`);
+      console.log(theme.muted(`no seeds found in ${seedsDir}/`));
     }
 
     if (values.seed) {
       await adapter.close();
       return 0;
     }
-    if (!manifest) throw new Error("internal error: build manifest missing");
 
     const emitter = new OtterEmitter();
     const flush = jsonlAppender(`${cwd}/.otter/target/events.jsonl`, emitter);
     emitter.onNode((e) => {
       if (e.type === "node.start") {
-        console.log(`building ${schema}.${e.id}`);
+        console.log(status("start", rel(e.id, schema)));
       } else if (e.type === "node.finish") {
-        console.log(`built ${schema}.${e.id} (${Math.round(e.duration_ms ?? 0)}ms)`);
+        console.log(status("done", rel(e.id, schema), duration(e.duration_ms ?? 0)));
       } else if (e.type === "node.error") {
-        console.log(`failed ${schema}.${e.id}: ${e.error}`);
+        console.log(status("fail", rel(e.id, schema), theme.error(String(e.error))));
       }
     });
 
     try {
+      const selector = values.select as string | undefined;
       const { results } = await runBuild({
         manifest,
         adapter,
-        selector: values.select as string | undefined,
+        selector,
         schema,
         emitter,
       });
-      await Bun.write(`${cwd}/.otter/target/run_results.json`, JSON.stringify(results, null, 2));
-      return Object.values(results.nodes).some((r) => r.status === "error") ? 1 : 0;
+      await Bun.write(`${cwd}/.otter/target/run_results.json`, JSON.stringify(results));
+      const buildFailed = Object.values(results.nodes).some((r) => r.status === "error");
+      if (buildFailed) return 1;
+
+      const selected = selector
+        ? evaluateSelector(parseSelector(selector), buildDag(Object.values(manifest.nodes)))
+        : undefined;
+      const { tests } = await runModelTests({
+        manifest,
+        adapter,
+        schema,
+        selected,
+        emitter: new OtterEmitter(),
+      });
+      if (tests.length === 0) return 0;
+
+      for (const t of tests) {
+        const label = rel(`${t.model}.${t.column}.${t.test}`, schema);
+        if (t.status === "pass") {
+          console.log(status("pass", label, duration(t.duration_ms)));
+        } else if (t.status === "fail") {
+          console.log(
+            status(
+              "fail",
+              label,
+              `${theme.error(`${t.failures} row(s) failed`)} ${SEP} ${duration(t.duration_ms)}`,
+            ),
+          );
+        } else {
+          console.log(
+            status(
+              "fail",
+              label,
+              `${theme.error(t.error ?? "error")} ${SEP} ${duration(t.duration_ms)}`,
+            ),
+          );
+        }
+      }
+      const passed = tests.filter((t) => t.status === "pass").length;
+      const failed = tests.length - passed;
+      console.log(
+        `${theme.muted("tests:")} ${count(passed, "passed")} ${SEP} ${count(failed, "failed")}`,
+      );
+      await Bun.write(`${cwd}/.otter/target/test_results.json`, JSON.stringify({ tests }));
+      return failed > 0 ? 1 : 0;
     } finally {
       await flush();
       await adapter.close();

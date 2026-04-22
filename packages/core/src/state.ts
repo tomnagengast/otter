@@ -3,6 +3,7 @@ import { Database } from "bun:sqlite";
 export interface StateStore {
   getCursor(sourceName: string, stream: string): string | undefined;
   setCursor(sourceName: string, stream: string, value: string): void;
+  clearCursor(sourceName: string, stream: string): void;
   close(): void;
 }
 
@@ -33,6 +34,9 @@ export function openState(path: string): StateStore {
          on conflict (source_name, stream) do update set value = excluded.value, updated_at = excluded.updated_at`,
         [s, t, v, Date.now()],
       );
+    },
+    clearCursor(s, t) {
+      db.run(`delete from cursors where source_name = ? and stream = ?`, [s, t]);
     },
     close() {
       db.close();

@@ -13,8 +13,12 @@ export function createAdapter(config: { url: string; schema?: string }): Adapter
     return rows[0] ? Object.keys(rows[0]) : [];
   }
 
-  async function ensureTable(t: TableRef, cols: string[]): Promise<void> {
-    const colDefs = cols.map((c) => `${quote(c)} text`).join(", ");
+  async function ensureTable(
+    t: TableRef,
+    cols: string[],
+    columnTypes?: Record<string, string>,
+  ): Promise<void> {
+    const colDefs = cols.map((c) => `${quote(c)} ${columnTypes?.[c] ?? "text"}`).join(", ");
     await sql.unsafe(`create schema if not exists ${quote(t.schema)}`);
     await sql.unsafe(`create table if not exists ${qualify(t)} (${colDefs})`);
   }
@@ -26,9 +30,11 @@ export function createAdapter(config: { url: string; schema?: string }): Adapter
     );
   }
 
-  /** Escape a value for inline SQL literal (all columns are text). */
+  /** Escape a value for inline SQL literal; relies on Postgres implicit cast to the column type. */
   function escapeLiteral(v: unknown): string {
     if (v === null || v === undefined) return "NULL";
+    if (v instanceof Date) return `'${v.toISOString()}'`;
+    if (typeof v === "object") return `'${JSON.stringify(v).replace(/'/g, "''")}'`;
     return `'${String(v).replace(/'/g, "''")}'`;
   }
 
@@ -79,7 +85,7 @@ export function createAdapter(config: { url: string; schema?: string }): Adapter
       }
       for await (const batch of rows) {
         if (firstBatch) {
-          await ensureTable(t, inferColumns(batch));
+          await ensureTable(t, inferColumns(batch), opts?.columnTypes);
           if (strategy === "merge" && opts?.uniqueKey) {
             await ensureUniqueIndex(t, opts.uniqueKey);
           }

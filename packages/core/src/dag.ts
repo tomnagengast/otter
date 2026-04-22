@@ -1,7 +1,18 @@
+export type ColumnTest = "unique" | "not_null";
+
+export interface ColumnConfig {
+  tests?: ColumnTest[];
+}
+
 export interface DagNode {
   id: string;
   path: string;
-  config: { materialized: "view" | "table" | "incremental"; unique_key?: string; tags?: string[] };
+  config: {
+    materialized: "view" | "table" | "incremental";
+    unique_key?: string;
+    tags?: string[];
+    columns?: Record<string, ColumnConfig>;
+  };
   sql: string;
   deps: string[];
   sources: string[];

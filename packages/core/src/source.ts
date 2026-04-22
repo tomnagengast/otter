@@ -16,9 +16,15 @@ export interface ExtractOpts {
   identifier?: string;
 }
 
+export interface ExtractStream {
+  /** Warehouse (postgres) column types, keyed by column name. */
+  columnTypes: Record<string, string>;
+  rows: AsyncIterable<Row[]>;
+}
+
 export interface Source {
   kind: string;
-  extract(stream: string, state: CursorState, opts?: ExtractOpts): AsyncIterable<Row[]>;
+  extract(stream: string, state: CursorState, opts?: ExtractOpts): Promise<ExtractStream>;
   close(): Promise<void>;
 }
 

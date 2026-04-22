@@ -1,5 +1,9 @@
 {{ config(
-  materialized: "table"
+  materialized: "table",
+  columns: {
+      customer_id: { tests: ["unique", "not_null"] },
+      source: { tests: ["not_null"] },
+  }
 ) }}
 
 with
@@ -8,9 +12,9 @@ with
 
   events as (select * from {{ ref("stg_clickhouse_events") }}),
 
-  postgres_orders as (select * from {{ ref("stg_postgres_orders") }}),
+  stg_postgres_orders as (select * from {{ ref("stg_postgres_orders") }}),
 
-  seed_orders as (select * from {{ ref("stg_seed_orders") }}),
+  stg_seed_orders as (select * from {{ ref("stg_seed_orders") }}),
 
   postgres_orders as (
 
@@ -20,7 +24,7 @@ with
       amount,
       created_at,
       'postgres' as source
-    from postgres_orders
+    from stg_postgres_orders
 
   ),
 
@@ -30,9 +34,9 @@ with
       id,
       customer_id,
       amount,
-      null as created_at,
+      null::timestamptz as created_at,
       'seed' as source
-    from seed_orders
+    from stg_seed_orders
 
   ),
 
@@ -41,7 +45,6 @@ with
     select * from postgres_orders
     union all
     select * from seed_orders
-
   ),
 
   customer_orders as (

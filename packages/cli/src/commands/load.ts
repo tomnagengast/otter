@@ -16,6 +16,7 @@ import {
   type WriteDisposition,
 } from "@otter/core";
 import { defineCommand } from "../argv.ts";
+import { count, duration, rel, SEP, status } from "../ui.ts";
 
 export const loadCommand = defineCommand({
   name: "load",
@@ -25,6 +26,7 @@ export const loadCommand = defineCommand({
     profile: { type: "string", default: "dev" },
     strategy: { type: "string" },
     "unique-key": { type: "string" },
+    "full-refresh": { type: "boolean" },
   },
   async run({ values, positionals }) {
     const cwd = process.cwd();
@@ -33,7 +35,10 @@ export const loadCommand = defineCommand({
     if (!profile) throw new Error(`unknown profile: ${values.profile}`);
 
     const definitions = await loadSourceDefinitions(cwd, config.sourcesDir ?? "sources");
-    const strategyFlag = values.strategy as LoadStrategy | undefined;
+    const fullRefresh = Boolean(values["full-refresh"]);
+    const strategyFlag = (
+      fullRefresh ? "replace" : (values.strategy as LoadStrategy | undefined)
+    ) as LoadStrategy | undefined;
     const uniqueKeyFlag = values["unique-key"] as string | undefined;
 
     const [streamRef] = positionals;
@@ -61,6 +66,7 @@ export const loadCommand = defineCommand({
           streamConfig: resolveStream(definitions, sourceName, stream),
           strategyFlag,
           uniqueKeyFlag,
+          fullRefresh,
           state,
         });
       }
@@ -80,6 +86,7 @@ interface LoadStreamOpts {
   streamConfig: StreamConfig | undefined;
   strategyFlag?: LoadStrategy;
   uniqueKeyFlag?: string;
+  fullRefresh?: boolean;
   state: StateStore;
 }
 
@@ -94,6 +101,11 @@ async function loadStream(opts: LoadStreamOpts): Promise<void> {
     throw new Error(
       `${sourceName}.${stream}: merge requires primary_key in sources/${sourceName}.ts or --unique-key`,
     );
+  }
+
+  const cursorField = streamConfig?.incremental?.cursor_field;
+  if (opts.fullRefresh && cursorField) {
+    state.clearCursor(sourceName, `${stream}:${cursorField}`);
   }
 
   const cursorState = {
@@ -111,7 +123,7 @@ async function loadStream(opts: LoadStreamOpts): Promise<void> {
   };
 
   const extractOpts = {
-    cursorField: streamConfig?.incremental?.cursor_field,
+    cursorField,
     initialValue: streamConfig?.incremental?.initial_value,
     schema: streamConfig?.schema,
     identifier: streamConfig?.identifier,
@@ -119,14 +131,14 @@ async function loadStream(opts: LoadStreamOpts): Promise<void> {
 
   const started = performance.now();
   try {
-    const result = await adapter.bulkLoad(
-      target,
-      src.extract(stream, cursorState, extractOpts),
-      strategy,
-      { uniqueKey },
-    );
+    const { columnTypes, rows } = await src.extract(stream, cursorState, extractOpts);
+    const result = await adapter.bulkLoad(target, rows, strategy, { uniqueKey, columnTypes });
     console.log(
-      `loaded ${result.rows} rows into ${target.schema}.${target.name} in ${Math.round(performance.now() - started)}ms`,
+      status(
+        "done",
+        rel(target.name, target.schema),
+        `${count(result.rows, "rows")} ${SEP} ${duration(performance.now() - started)}`,
+      ),
     );
   } finally {
     await src.close();

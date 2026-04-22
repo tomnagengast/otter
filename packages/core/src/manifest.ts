@@ -4,7 +4,7 @@ import type { Manifest } from "./compile.ts";
 
 export async function writeManifest(path: string, manifest: Manifest): Promise<void> {
   await mkdir(dirname(path), { recursive: true });
-  await Bun.write(path, JSON.stringify(manifest, null, 2));
+  await Bun.write(path, JSON.stringify(manifest));
 }
 
 export async function readManifest(path: string): Promise<Manifest> {

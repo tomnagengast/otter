@@ -1,4 +1,4 @@
-import type { DagNode } from "./dag.ts";
+import type { ColumnTest, DagNode } from "./dag.ts";
 
 export interface CompiledTemplate {
   config: DagNode["config"];
@@ -82,6 +82,40 @@ function parseConfig(body: string, modelId: string): DagNode["config"] {
       throw new Error(`${modelId}: tags must be string[]`);
     }
     out.tags = obj.tags as string[];
+  }
+  if (obj.columns !== undefined) {
+    out.columns = parseColumns(obj.columns, modelId);
+  }
+  return out;
+}
+
+const VALID_TESTS = new Set(["unique", "not_null"]);
+
+function parseColumns(raw: unknown, modelId: string): NonNullable<DagNode["config"]["columns"]> {
+  if (!raw || typeof raw !== "object" || Array.isArray(raw)) {
+    throw new Error(`${modelId}: columns must be an object literal`);
+  }
+  const out: NonNullable<DagNode["config"]["columns"]> = {};
+  for (const [col, cfg] of Object.entries(raw as Record<string, unknown>)) {
+    if (!cfg || typeof cfg !== "object" || Array.isArray(cfg)) {
+      throw new Error(`${modelId}: columns.${col} must be an object literal`);
+    }
+    const tests = (cfg as Record<string, unknown>).tests;
+    if (tests === undefined) {
+      out[col] = {};
+      continue;
+    }
+    if (!Array.isArray(tests) || !tests.every((t) => typeof t === "string")) {
+      throw new Error(`${modelId}: columns.${col}.tests must be string[]`);
+    }
+    for (const t of tests as string[]) {
+      if (!VALID_TESTS.has(t)) {
+        throw new Error(
+          `${modelId}: columns.${col} unknown test "${t}" (supported: ${[...VALID_TESTS].join(", ")})`,
+        );
+      }
+    }
+    out[col] = { tests: tests as ColumnTest[] };
   }
   return out;
 }

@@ -57,3 +57,27 @@ test("rejects invalid materialized value", () => {
 test("rejects wrong-arity ref", () => {
   expect(() => compileTemplate(`select {{ ref("a", "b") }}`, "m")).toThrow(/expects 1/);
 });
+
+test("parses columns.tests from config", () => {
+  const out = compileTemplate(
+    `{{ config(
+      materialized: "table",
+      columns: {
+        id: { tests: ["unique", "not_null"] },
+        source: { tests: ["not_null"] },
+      }
+    ) }}
+    select 1`,
+    "m",
+  );
+  expect(out.config.columns).toEqual({
+    id: { tests: ["unique", "not_null"] },
+    source: { tests: ["not_null"] },
+  });
+});
+
+test("rejects unknown test name", () => {
+  expect(() =>
+    compileTemplate(`{{ config(columns: { id: { tests: ["snapshot"] } }) }} select 1`, "m"),
+  ).toThrow(/unknown test/);
+});

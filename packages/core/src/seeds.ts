@@ -20,22 +20,82 @@ export async function discoverSeeds(cwd: string, seedsDir: string): Promise<Seed
   return seeds;
 }
 
-export function parseCsv(text: string): { columns: string[]; rows: Row[] } {
+export function parseCsv(text: string): {
+  columns: string[];
+  rows: Row[];
+  columnTypes: Record<string, string>;
+} {
   const records = parseRecords(text);
-  if (records.length === 0) return { columns: [], rows: [] };
+  if (records.length === 0) return { columns: [], rows: [], columnTypes: {} };
   const columns = records[0] as string[];
-  const rows: Row[] = [];
+  const raw: (string | null)[][] = [];
   for (let i = 1; i < records.length; i++) {
     const record = records[i];
     if (!record) continue;
     if (record.length === 1 && record[0] === "") continue;
+    const normalized: (string | null)[] = [];
+    for (let c = 0; c < columns.length; c++) {
+      const v = record[c];
+      normalized.push(v === undefined || v === "" ? null : v);
+    }
+    raw.push(normalized);
+  }
+  const columnTypes: Record<string, string> = {};
+  for (let c = 0; c < columns.length; c++) {
+    const col = columns[c] as string;
+    const values: string[] = [];
+    for (const row of raw) {
+      const v = row[c];
+      if (v != null) values.push(v);
+    }
+    columnTypes[col] = inferColumnType(values);
+  }
+  const rows: Row[] = raw.map((record) => {
     const row: Row = {};
     for (let c = 0; c < columns.length; c++) {
-      row[columns[c] as string] = record[c] ?? null;
+      row[columns[c] as string] = record[c];
     }
-    rows.push(row);
+    return row;
+  });
+  return { columns, rows, columnTypes };
+}
+
+type ValueKind = "bigint" | "numeric" | "boolean" | "date" | "timestamptz" | "text";
+
+const INT64_MIN = -9223372036854775808n;
+const INT64_MAX = 9223372036854775807n;
+
+function classifyValue(v: string): ValueKind {
+  const lower = v.toLowerCase();
+  if (lower === "true" || lower === "false") return "boolean";
+  if (/^\d{4}-\d{2}-\d{2}$/.test(v)) return "date";
+  if (/^\d{4}-\d{2}-\d{2}[T ]\d{2}:\d{2}(:\d{2}(\.\d+)?)?(Z|[+-]\d{2}:?\d{2})?$/.test(v)) {
+    return "timestamptz";
   }
-  return { columns, rows };
+  if (/^-?\d+$/.test(v)) {
+    try {
+      const n = BigInt(v);
+      if (n >= INT64_MIN && n <= INT64_MAX) return "bigint";
+    } catch {}
+    return "numeric";
+  }
+  if (/^-?(\d+\.\d*|\.\d+|\d+\.\d+)$/.test(v)) return "numeric";
+  return "text";
+}
+
+export function inferColumnType(values: string[]): string {
+  const seen = new Set<ValueKind>();
+  for (const v of values) seen.add(classifyValue(v));
+  if (seen.size === 0) return "text";
+  if (seen.size === 1) {
+    const only = [...seen][0] as ValueKind;
+    return only === "timestamptz" ? "timestamptz" : only;
+  }
+  if (seen.has("text")) return "text";
+  if (seen.has("boolean")) return "text";
+  if (seen.size === 2 && seen.has("bigint") && seen.has("numeric")) return "numeric";
+  if (seen.size === 2 && seen.has("date") && seen.has("timestamptz")) return "timestamptz";
+  return "text";
 }
 
 function parseRecords(text: string): string[][] {
@@ -106,7 +166,7 @@ export async function loadSeeds(opts: {
   const results: LoadSeedsResult["files"] = [];
   for (const seed of opts.seeds) {
     const text = await Bun.file(seed.path).text();
-    const { rows } = parseCsv(text);
+    const { rows, columnTypes } = parseCsv(text);
     const target = { schema: opts.schema, name: seed.name };
     const result: LoadResult = await opts.adapter.bulkLoad(
       target,
@@ -114,6 +174,7 @@ export async function loadSeeds(opts: {
         if (rows.length > 0) yield rows;
       })(),
       "replace",
+      { columnTypes },
     );
     results.push({ name: seed.name, rows: result.rows, duration_ms: result.duration_ms });
   }

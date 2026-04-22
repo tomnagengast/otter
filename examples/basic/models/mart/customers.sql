@@ -5,13 +5,13 @@
 with
 
   postgres_customers as (select * from {{ ref("stg_postgres_customers") }}),
-  
+
   seed_customers as (select * from {{ ref("stg_seed_customers") }}),
 
   final as (
 
     select
-      id,
+      md5(id || 'postgres') as id,
       name,
       email,
       created_at,
@@ -22,7 +22,7 @@ with
     union all
 
     select
-      id,
+      md5(id || 'seed') as id,
       name,
       email,
       null as created_at,

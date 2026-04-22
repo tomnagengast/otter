@@ -11,5 +11,7 @@ test("cursor round-trip", () => {
   expect(store.getCursor("s", "t")).toBe("2024-01-01");
   store.setCursor("s", "t", "2024-02-01");
   expect(store.getCursor("s", "t")).toBe("2024-02-01");
+  store.clearCursor("s", "t");
+  expect(store.getCursor("s", "t")).toBeUndefined();
   store.close();
 });
