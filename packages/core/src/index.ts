@@ -1,3 +1,5 @@
+export type { Adapter, ExecuteResult, LoadResult, LoadStrategy, TableRef } from "./adapter.ts";
+export { NotSupportedError, resolveAdapter } from "./adapter.ts";
 export type { Manifest } from "./compile.ts";
 export { compileProject } from "./compile.ts";
 export type { Config, ProfileConfig, SourceConfig, TargetConfig } from "./config.ts";
@@ -5,5 +7,7 @@ export { defineConfig, loadConfig } from "./config.ts";
 export type { Dag, DagNode } from "./dag.ts";
 export { buildDag, toposort } from "./dag.ts";
 export { readManifest, writeManifest } from "./manifest.ts";
+export type { CursorState, Row, Source } from "./source.ts";
+export { resolveSource } from "./source.ts";
 export type { SqlFragment } from "./sql.ts";
 export { ref, source, sql } from "./sql.ts";
