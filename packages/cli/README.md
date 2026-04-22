@@ -16,7 +16,7 @@ bunx jsr add @otter/cli
 deno add jsr:@otter/cli
 ```
 
-Run the CLI via Bun (recommended) or Deno:
+Run the CLI via Bun:
 
 ```bash
 bun x otter --help
