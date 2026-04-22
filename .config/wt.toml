@@ -1,0 +1,14 @@
+# https://worktrunk.dev/
+
+[pre-start]
+toolchain = "command -v mise >/dev/null && mise trust && mise install || true"
+
+[[post-start]]
+copy = "wt step copy-ignored"
+deps = """
+mkdir -p node_modules
+if [ -d {{ primary_worktree_path }}/node_modules/.bun ] && [ ! -e node_modules/.bun ]; then
+  ln -s {{ primary_worktree_path }}/node_modules/.bun node_modules/.bun
+fi
+bun install --frozen-lockfile || bun install
+"""
