@@ -1,18 +1,16 @@
-import type {
-  CursorState,
-  ExtractOpts,
-  ExtractStream,
-  Row,
-  Source,
-  SourceConfig,
-} from "@otter/core";
+import type { CursorState, ExtractOpts, ExtractStream, Row, Source } from "@otter/core";
 import { SQL } from "bun";
 
 const BATCH = 5000;
 
-export function createSource(config: SourceConfig): Source {
-  if (!config.url) throw new Error("source-postgres: config.url is required");
-  const sql = new SQL(config.url);
+export interface PostgresSourceOptions {
+  /** Postgres connection string. */
+  url: string;
+}
+
+export function postgresSource(options: PostgresSourceOptions): Source {
+  if (!options.url) throw new Error("source-postgres: options.url is required");
+  const sql = new SQL(options.url);
   return {
     kind: "postgres",
     async extract(stream: string, state: CursorState, opts?: ExtractOpts): Promise<ExtractStream> {

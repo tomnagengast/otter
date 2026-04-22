@@ -7,6 +7,7 @@ function mockAdapter(): { adapter: Adapter; calls: string[] } {
   const calls: string[] = [];
   const adapter: Adapter = {
     kind: "postgres",
+    schema: "public",
     async introspect() {
       return { tables: [] };
     },

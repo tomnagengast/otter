@@ -1,5 +1,5 @@
 import { expect, test } from "bun:test";
-import { createSource } from "./index.ts";
+import { clickhouseSource } from "./index.ts";
 
 const url = process.env.CLICKHOUSE_TEST_URL;
 const skip = !url;
@@ -21,8 +21,7 @@ test("extract forwards URL credentials as basic auth", async () => {
   });
 
   try {
-    const src = createSource({
-      kind: "clickhouse",
+    const src = clickhouseSource({
       url: `http://otter:secret@127.0.0.1:${server.port}`,
     });
     const batches: Record<string, unknown>[][] = [];
@@ -46,7 +45,7 @@ test("extract forwards URL credentials as basic auth", async () => {
 
 test.skipIf(skip)("streams rows from a known clickhouse table", async () => {
   // biome-ignore lint/style/noNonNullAssertion: guarded by skip above
-  const src = createSource({ kind: "clickhouse", url: url! });
+  const src = clickhouseSource({ url: url! });
   let total = 0;
   const noop = { get: () => undefined, set: () => {} };
   const { rows } = await src.extract("system.numbers", noop);

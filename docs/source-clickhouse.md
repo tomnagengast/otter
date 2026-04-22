@@ -5,20 +5,20 @@
 
 ## Configuration
 
-Declare a ClickHouse source under `sources` in `otter.config.ts`:
+Import `clickhouseSource` and declare the source under `sources` in `otter.config.ts`:
 
-| Field  | Type           | Default | Description                          |
-| ------ | -------------- | ------- | ------------------------------------ |
-| `kind` | `"clickhouse"` | —       | Driver discriminant                  |
-| `url`  | `string`       | —       | HTTP(S) URL of the ClickHouse server |
+| Option | Type     | Default | Description                          |
+| ------ | -------- | ------- | ------------------------------------ |
+| `url`  | `string` | —       | HTTP(S) URL of the ClickHouse server |
 
 ```typescript
 // otter.config.ts (excerpt)
+import { clickhouseSource } from "@otter/source-clickhouse";
+
 sources: {
-  events_ch: {
-    kind: "clickhouse",
+  events_ch: clickhouseSource({
     url: process.env.CLICKHOUSE_URL ?? "http://localhost:8123",
-  },
+  }),
 },
 ```
 
@@ -81,15 +81,16 @@ See [models.md](models.md#model-api) for incremental model config and
 
 ```typescript
 // otter.config.ts
+import { postgresAdapter } from "@otter/adapter-postgres";
 import { defineConfig } from "@otter/core";
+import { clickhouseSource } from "@otter/source-clickhouse";
 
 export default defineConfig({
-  profiles: { dev: { target: { kind: "postgres", url: process.env.PG_URL ?? "" } } },
+  profiles: { dev: { target: postgresAdapter({ url: process.env.PG_URL ?? "" }) } },
   sources: {
-    events_ch: {
-      kind: "clickhouse",
+    events_ch: clickhouseSource({
       url: process.env.CLICKHOUSE_URL ?? "http://localhost:8123",
-    },
+    }),
   },
   modelsDir: "models",
 });
@@ -99,5 +100,5 @@ export default defineConfig({
 otter load events_ch.events --strategy append
 ```
 
-Related: [sources.md](sources.md#source-interface), [configuration.md](configuration.md#sourceconfig),
+Related: [sources.md](sources.md#source-interface), [configuration.md](configuration.md#sources),
 [cli.md](cli.md#load), [materializations.md](materializations.md#incremental).

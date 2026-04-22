@@ -3,6 +3,16 @@
   "private": true,
   "packageManager": "bun@1.3.11",
   "scripts": {
-    "cli": "bun ../../packages/cli/src/bin.ts"
+    "otter": "otter"
+  },
+  "dependencies": {
+    "@otter/adapter-postgres": "workspace:*",
+    "@otter/core": "workspace:*",
+    "@otter/source-clickhouse": "workspace:*",
+    "@otter/source-postgres": "workspace:*",
+    "@otter/source-stripe": "workspace:*"
+  },
+  "devDependencies": {
+    "@otter/cli": "workspace:*"
   }
 }

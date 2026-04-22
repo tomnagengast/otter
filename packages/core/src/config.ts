@@ -1,27 +1,13 @@
-export type TargetKind = "postgres";
-export type SourceKind = "postgres" | "clickhouse" | "stripe" | (string & {});
-
-export interface TargetConfig {
-  kind: TargetKind;
-  url: string;
-  schema?: string;
-}
-
-export interface SourceConfig {
-  kind: SourceKind;
-  /** Connection string. Optional for API-style sources that authenticate via `options`. */
-  url?: string;
-  /** Driver-specific options (e.g. API keys, pagination sizes). */
-  options?: Record<string, unknown>;
-}
+import type { Adapter } from "./adapter.ts";
+import type { Source } from "./source.ts";
 
 export interface ProfileConfig {
-  target: TargetConfig;
+  target: Adapter;
 }
 
 export interface Config {
   profiles: Record<string, ProfileConfig>;
-  sources: Record<string, SourceConfig>;
+  sources: Record<string, Source>;
   modelsDir: string;
   seedsDir?: string;
   sourcesDir?: string;

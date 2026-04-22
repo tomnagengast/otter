@@ -6,13 +6,13 @@ materialization execution, and the staging-table swap used by `table` and `incre
 ## Table of Contents
 
 - [Adapter Interface](#adapter-interface)
-- [Driver Resolution](#driver-resolution)
+- [Adapter Factories](#adapter-factories)
 - [Capability Matrix](#capability-matrix)
 - [Adding an Adapter](#adding-an-adapter)
 
 ## Adapter Interface
 
-Every adapter exports a `createAdapter(config)` factory that returns an `Adapter`:
+Every adapter exports a factory function (e.g. `postgresAdapter`) that returns an `Adapter`:
 
 ```typescript
 export interface TableRef {
@@ -31,6 +31,8 @@ export interface MergeIncrementalOpts {
 
 export interface Adapter {
   kind: string;
+  /** Default schema used for materialization and bare-identifier resolution. */
+  schema: string;
   introspect(): Promise<{ tables: TableRef[] }>;
   bulkLoad(
     target: TableRef,
@@ -45,6 +47,9 @@ export interface Adapter {
 }
 ```
 
+- `kind` identifies the adapter (e.g. `"postgres"`).
+- `schema` is the default schema the adapter writes into; the CLI reads this when constructing
+  `TableRef`s and setting `search_path`.
 - `introspect` returns the list of base tables visible to the adapter.
 - `bulkLoad` consumes the source `AsyncIterable<Row[]>` and lands rows using the requested
   strategy. It also creates the schema and table on first batch.
@@ -56,13 +61,24 @@ export interface Adapter {
   when a model with `materialized: "incremental"` runs.
 - `close` releases the connection pool.
 
-## Driver Resolution
+## Adapter Factories
 
-Adapters are resolved by dynamic import using the `TargetConfig.kind`:
+Adapters are imported and instantiated explicitly in `otter.config.ts`:
 
 ```typescript
-const mod = await import(`@otter/adapter-${kind}`);
-const adapter = mod.createAdapter(profile.target);
+import { postgresAdapter } from "@otter/adapter-postgres";
+
+export default defineConfig({
+  profiles: {
+    dev: {
+      target: postgresAdapter({
+        url: process.env.PG_URL ?? "",
+        schema: "analytics",
+      }),
+    },
+  },
+  // ...
+});
 ```
 
 Today otter ships a single adapter: [adapter-postgres.md](adapter-postgres.md).
@@ -78,17 +94,20 @@ See [load-strategies.md](load-strategies.md) for strategy semantics and
 
 ## Adding an Adapter
 
-1. Create a new workspace package named `@otter/adapter-<kind>`.
-2. Export a `createAdapter(config: { url: string; schema?: string })` returning an `Adapter`.
+1. Create a new package (name it whatever you like — the CLI uses the imported factory, not the
+   package name).
+2. Export a typed factory function that takes its own options interface and returns an `Adapter`.
+   By convention, name it `<kind>Adapter` (e.g. `bigqueryAdapter`). Remember to populate `schema`
+   on the returned object.
 3. Implement `bulkLoad`, `execute`, `swap`, and `close`. Implement `mergeIncremental` if the
    database supports an upsert primitive (otherwise leave it unset).
-4. Add the package to `packages/`; `bun install` will link it automatically.
-
-Users can then declare:
+4. Publish the package. Users install it and import the factory in their `otter.config.ts`:
 
 ```typescript
+import { myAdapter } from "@acme/adapter-mything";
+
 profiles: {
-  dev: { target: { kind: "<kind>", url: process.env.MY_URL ?? "" } },
+  dev: { target: myAdapter({ url: process.env.MY_URL ?? "" }) },
 }
 ```
 

@@ -1,5 +1,5 @@
 import { expect, test } from "bun:test";
-import { createSource } from "./index.ts";
+import { stripeSource } from "./index.ts";
 
 interface StripeObject {
   id: string;
@@ -43,9 +43,9 @@ test("paginates until has_more is false and sets cursor to max created", async (
         store.set(k, v);
       },
     };
-    const src = createSource({
-      kind: "stripe",
-      options: { apiKey: "sk_test_x", baseUrl: `http://127.0.0.1:${server.port}` },
+    const src = stripeSource({
+      apiKey: "sk_test_x",
+      baseUrl: `http://127.0.0.1:${server.port}`,
     });
     const { columnTypes, rows } = await src.extract("customers", state);
     const batches: Record<string, unknown>[][] = [];
@@ -87,9 +87,9 @@ test("passes created[gt] filter from prior cursor state", async () => {
         store.set(k, v);
       },
     };
-    const src = createSource({
-      kind: "stripe",
-      options: { apiKey: "sk_test_x", baseUrl: `http://127.0.0.1:${server.port}` },
+    const src = stripeSource({
+      apiKey: "sk_test_x",
+      baseUrl: `http://127.0.0.1:${server.port}`,
     });
     const { rows } = await src.extract("customers", state);
     for await (const _ of rows) {
@@ -119,14 +119,11 @@ test("authorization and stripe-version headers", async () => {
   });
   try {
     const noop = { get: () => undefined, set: () => {} };
-    const src = createSource({
-      kind: "stripe",
-      options: {
-        apiKey: "sk_test_abc",
-        baseUrl: `http://127.0.0.1:${server.port}`,
-        apiVersion: "2024-06-20",
-        stripeAccount: "acct_123",
-      },
+    const src = stripeSource({
+      apiKey: "sk_test_abc",
+      baseUrl: `http://127.0.0.1:${server.port}`,
+      apiVersion: "2024-06-20",
+      stripeAccount: "acct_123",
     });
     const { rows } = await src.extract("charges", noop);
     for await (const _ of rows) {
@@ -167,9 +164,9 @@ test("widens column types across a batch and stores nested values as jsonb", asy
   });
   try {
     const noop = { get: () => undefined, set: () => {} };
-    const src = createSource({
-      kind: "stripe",
-      options: { apiKey: "sk_test_x", baseUrl: `http://127.0.0.1:${server.port}` },
+    const src = stripeSource({
+      apiKey: "sk_test_x",
+      baseUrl: `http://127.0.0.1:${server.port}`,
     });
     const { columnTypes, rows } = await src.extract("charges", noop);
     const all: Record<string, unknown>[] = [];
@@ -203,9 +200,9 @@ test("retries on 429 using retry-after header", async () => {
   });
   try {
     const noop = { get: () => undefined, set: () => {} };
-    const src = createSource({
-      kind: "stripe",
-      options: { apiKey: "sk_test_x", baseUrl: `http://127.0.0.1:${server.port}` },
+    const src = stripeSource({
+      apiKey: "sk_test_x",
+      baseUrl: `http://127.0.0.1:${server.port}`,
     });
     const { rows } = await src.extract("customers", noop);
     const all: Record<string, unknown>[] = [];
@@ -222,7 +219,7 @@ test("throws when apiKey is missing", () => {
   const previous = process.env.STRIPE_API_KEY;
   delete process.env.STRIPE_API_KEY;
   try {
-    expect(() => createSource({ kind: "stripe" })).toThrow(/apiKey is required/);
+    expect(() => stripeSource()).toThrow(/apiKey is required/);
   } finally {
     if (previous !== undefined) process.env.STRIPE_API_KEY = previous;
   }

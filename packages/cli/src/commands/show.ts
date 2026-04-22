@@ -1,4 +1,4 @@
-import { loadConfig, resolveAdapter } from "@otter/core";
+import { loadConfig } from "@otter/core";
 import { defineCommand } from "../argv.ts";
 import { readCompiledManifest } from "../manifest.ts";
 import { theme } from "../ui.ts";
@@ -18,9 +18,8 @@ export const showCommand = defineCommand({
     if (!profile) throw new Error(`unknown profile: ${profileName}`);
     const manifest = await readCompiledManifest(cwd, "show");
     if (!manifest.nodes[model]) throw new Error(`unknown model: ${model}`);
-    const { createAdapter } = await resolveAdapter(profile.target.kind);
-    const schema = profile.target.schema ?? "analytics";
-    const adapter = createAdapter({ ...profile.target, schema });
+    const adapter = profile.target;
+    const schema = adapter.schema;
     const limit = Number(values.limit);
     const result = await adapter.execute(`select * from "${schema}"."${model}" limit ${limit}`);
     if (result.rows && result.rows.length > 0) console.table(result.rows);

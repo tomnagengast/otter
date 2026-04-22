@@ -1,18 +1,20 @@
 # Sources
 
-A source is a declarative pointer at an upstream system. `otter load <source>.<stream>` asks the
-source driver to stream rows from that stream and hands each batch to the target adapter.
+A source is an instance of a driver that knows how to stream rows from an upstream system.
+`otter load <source>.<stream>` asks the source to stream rows and hands each batch to the
+target adapter.
 
 ## Table of Contents
 
 - [Source Interface](#source-interface)
-- [Driver Resolution](#driver-resolution)
+- [Source Factories](#source-factories)
 - [Streams and Cursors](#streams-and-cursors)
 - [Adding a Source Driver](#adding-a-source-driver)
 
 ## Source Interface
 
-Every source driver exports a `createSource(config)` factory that returns a `Source`:
+Every source driver exports a factory function (e.g. `postgresSource`, `stripeSource`) that
+returns a `Source`:
 
 ```typescript
 export type Row = Record<string, unknown>;
@@ -46,32 +48,38 @@ export interface Source {
 }
 ```
 
-- `kind` mirrors the string used in `config.sources.<name>.kind`.
+- `kind` identifies the driver (e.g. `"postgres"`, `"clickhouse"`, `"stripe"`).
 - `extract` returns `columnTypes` (used by the adapter to `CREATE TABLE` with real types instead
   of `text`) and a `rows` async iterable that yields batches (typically 5 000 per batch).
 - `close` releases any sockets or handles the driver owns.
 
 `ExtractOpts` is derived from the per-stream config in `sourcesDir/<name>.ts`
-([`defineSource`](configuration.md#sourceconfig)) and from the CLI flags passed to
-`otter load`.
+([`defineSource`](sources.md)) and from the CLI flags passed to `otter load`.
 
-## Driver Resolution
+## Source Factories
 
-Sources are resolved by dynamic import:
+Sources are imported and instantiated explicitly in `otter.config.ts`:
 
 ```typescript
-const mod = await import(`@otter/source-${kind}`);
-const source = mod.createSource(config.sources[name]);
+import { postgresSource } from "@otter/source-postgres";
+import { stripeSource } from "@otter/source-stripe";
+
+export default defineConfig({
+  sources: {
+    app_db: postgresSource({ url: process.env.SOURCE_PG_URL ?? "" }),
+    billing: stripeSource({ apiKey: process.env.STRIPE_API_KEY }),
+  },
+  // ...
+});
 ```
 
-Today otter ships three driver packages:
+Each factory takes a typed options object specific to that driver; missing or malformed options
+surface as TypeScript errors at build time rather than runtime. Today otter ships three driver
+packages:
 
-- [source-postgres.md](source-postgres.md) — `@otter/source-postgres`
-- [source-clickhouse.md](source-clickhouse.md) — `@otter/source-clickhouse`
-- [source-stripe.md](source-stripe.md) — `@otter/source-stripe`
-
-Any package that matches the `@otter/source-<kind>` naming convention and exports
-`createSource` will resolve at runtime.
+- [source-postgres.md](source-postgres.md) — `@otter/source-postgres` exports `postgresSource`
+- [source-clickhouse.md](source-clickhouse.md) — `@otter/source-clickhouse` exports `clickhouseSource`
+- [source-stripe.md](source-stripe.md) — `@otter/source-stripe` exports `stripeSource`
 
 ## Streams and Cursors
 
@@ -86,17 +94,18 @@ See [state.md](state.md#cursors) for the on-disk schema.
 
 ## Adding a Source Driver
 
-1. Create a new workspace package named `@otter/source-<kind>`.
-2. Export a `createSource(config: SourceConfig)` function returning a `Source`. Read
-   `config.url` for connection-string sources or `config.options` for API-style sources.
-3. Add the package to the workspace `packages/` directory; `bun install` will link it.
-
-Users can then declare:
+1. Create a new workspace package (name it whatever you like — the CLI uses the imported factory,
+   not the package name).
+2. Export a typed factory function that takes its own options interface and returns a `Source`.
+   By convention, name it `<kind>Source` (e.g. `bigquerySource`).
+3. Publish the package. Users install it alongside `@otter/cli` and import the factory in their
+   `otter.config.ts`:
 
 ```typescript
+import { mythingSource } from "@acme/source-mything";
+
 sources: {
-  my_thing: { kind: "<kind>", url: process.env.MY_THING_URL ?? "" },
-  my_api:   { kind: "<kind>", options: { apiKey: process.env.MY_API_KEY } },
+  my_thing: mythingSource({ url: process.env.MY_THING_URL ?? "" }),
 }
 ```
 

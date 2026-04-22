@@ -1,6 +1,6 @@
 import { expect, test } from "bun:test";
 import { SQL } from "bun";
-import { createAdapter } from "./index.ts";
+import { postgresAdapter } from "./index.ts";
 
 const url = process.env.PG_TEST_URL;
 const skip = !url;
@@ -12,7 +12,7 @@ function testSchema(name: string): string {
 test.skipIf(skip)("replace + append + merge on a two-column table", async () => {
   const schema = testSchema("replace");
   // biome-ignore lint/style/noNonNullAssertion: test is skipped when url is undefined
-  const adapter = createAdapter({ url: url!, schema });
+  const adapter = postgresAdapter({ url: url!, schema });
   // biome-ignore lint/style/noNonNullAssertion: test is skipped when url is undefined
   const sql = new SQL(url!);
   const target = { schema, name: "t" };
@@ -52,7 +52,7 @@ test.skipIf(skip)("replace + append + merge on a two-column table", async () => 
 test.skipIf(skip)("mergeIncremental upserts without a pre-existing unique constraint", async () => {
   const schema = testSchema("incremental");
   // biome-ignore lint/style/noNonNullAssertion: test is skipped when url is undefined
-  const adapter = createAdapter({ url: url!, schema });
+  const adapter = postgresAdapter({ url: url!, schema });
   // biome-ignore lint/style/noNonNullAssertion: test is skipped when url is undefined
   const sql = new SQL(url!);
 
@@ -94,7 +94,7 @@ test.skipIf(skip)("mergeIncremental upserts without a pre-existing unique constr
 test.skipIf(skip)("swap can replace an existing table repeatedly", async () => {
   const schema = testSchema("swap");
   // biome-ignore lint/style/noNonNullAssertion: test is skipped when url is undefined
-  const adapter = createAdapter({ url: url!, schema });
+  const adapter = postgresAdapter({ url: url!, schema });
   // biome-ignore lint/style/noNonNullAssertion: test is skipped when url is undefined
   const sql = new SQL(url!);
 

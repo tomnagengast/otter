@@ -35,9 +35,10 @@ Three event types are emitted today:
 Use `OtterEmitter` directly if you drive `runBuild` yourself:
 
 ```typescript
-import { readManifest, resolveAdapter, runBuild } from "@otter/core";
+import { postgresAdapter } from "@otter/adapter-postgres";
+import { readManifest, runBuild } from "@otter/core";
 
-const adapter = (await resolveAdapter("postgres")).createAdapter({ url: "postgres://…" });
+const adapter = postgresAdapter({ url: "postgres://…", schema: "analytics" });
 const manifest = await readManifest(".otter/target/manifest.json");
 
 const { emitter, results } = await runBuild({ manifest, adapter, schema: "analytics" });

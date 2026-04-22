@@ -5,9 +5,16 @@ import { qualify, quote } from "./identifiers.ts";
 
 export { NotSupportedError };
 
-export function createAdapter(config: { url: string; schema?: string }): Adapter {
-  const defaultSchema = config.schema ?? "public";
-  const sql = new SQL(config.url);
+export interface PostgresAdapterOptions {
+  /** Postgres connection string. */
+  url: string;
+  /** Default schema for materialization and bare-identifier resolution. Defaults to `"public"`. */
+  schema?: string;
+}
+
+export function postgresAdapter(options: PostgresAdapterOptions): Adapter {
+  const defaultSchema = options.schema ?? "public";
+  const sql = new SQL(options.url);
 
   function inferColumns(rows: Row[]): string[] {
     return rows[0] ? Object.keys(rows[0]) : [];
@@ -68,6 +75,7 @@ export function createAdapter(config: { url: string; schema?: string }): Adapter
 
   return {
     kind: "postgres",
+    schema: defaultSchema,
     async introspect() {
       const rows = (await sql`
         select table_schema as schema, table_name as name

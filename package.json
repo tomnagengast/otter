@@ -6,7 +6,8 @@
     "node": "24"
   },
   "workspaces": [
-    "packages/*"
+    "packages/*",
+    "examples/*"
   ],
   "scripts": {
     "cli": "cd packages/cli && bun dev",
@@ -30,12 +31,6 @@
   },
   "peerDependencies": {
     "typescript": "^5"
-  },
-  "dependencies": {
-    "@otter/adapter-postgres": "workspace:*",
-    "@otter/source-clickhouse": "workspace:*",
-    "@otter/source-postgres": "workspace:*",
-    "@otter/source-stripe": "workspace:*"
   },
   "devDependencies": {
     "@biomejs/biome": "^2.4.12",
