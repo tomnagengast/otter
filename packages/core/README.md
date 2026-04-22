@@ -1,24 +1,22 @@
-# @otter/core
+# @otter-sh/core
 
 Shared types, config loader, compiler, DAG runner, selector engine, and state store for
 [Otter](https://github.com/tomnagengast/otter) — a Bun-native ELT tool with `.sql` models and a
-TypeScript config. Every other `@otter/*` package depends on this one and it has no runtime
+TypeScript config. Every other `@otter-sh/*` package depends on this one and it has no runtime
 dependencies outside Bun built-ins (`Bun.sql`, `bun:sqlite`, `Bun.file`).
 
-Most users do not import `@otter/core` directly — they install
-[`@otter/cli`](https://jsr.io/@otter/cli) and write an `otter.config.ts`. Import this package
-when you are authoring a **source driver**, **target adapter**, or a programmatic runner that
-drives `compile` / `build` from code.
+Most users do not import `@otter-sh/core` directly — they install
+[`@otter-sh/cli`](https://www.npmjs.com/package/@otter-sh/cli) and write an `otter.config.ts`.
+Import this package when you are authoring a **source driver**, **target adapter**, or a
+programmatic runner that drives `compile` / `build` from code.
 
 ## Install
 
 ```bash
-# Bun
-bunx jsr add @otter/core
-
-# Deno
-deno add jsr:@otter/core
+bun add @otter-sh/core
 ```
+
+Requires Bun — this package imports `"bun"` and `"bun:sqlite"` at runtime.
 
 ## What's exported
 
@@ -39,9 +37,9 @@ deno add jsr:@otter/core
 
 ```typescript
 // otter.config.ts
-import { postgresAdapter } from "@otter/adapter-postgres";
-import { defineConfig } from "@otter/core";
-import { postgresSource } from "@otter/source-postgres";
+import { postgresAdapter } from "@otter-sh/adapter-postgres";
+import { defineConfig } from "@otter-sh/core";
+import { postgresSource } from "@otter-sh/source-postgres";
 
 export default defineConfig({
   profiles: {
@@ -67,7 +65,7 @@ A source driver is any package that exports a typed factory returning a `Source`
 imported explicitly from `otter.config.ts`:
 
 ```typescript
-import type { Source, ExtractStream, CursorState, ExtractOpts } from "@otter/core";
+import type { Source, ExtractStream, CursorState, ExtractOpts } from "@otter-sh/core";
 
 export interface MySourceOptions {
   url: string;
@@ -89,7 +87,7 @@ export function mySource(options: MySourceOptions): Source {
 A target adapter is any package that exports a typed factory returning an `Adapter`:
 
 ```typescript
-import type { Adapter, TableRef, LoadStrategy, Row } from "@otter/core";
+import type { Adapter, TableRef, LoadStrategy, Row } from "@otter-sh/core";
 
 export interface MyAdapterOptions {
   url: string;
@@ -128,7 +126,7 @@ these from `sourcesDir/<name>.ts`:
 
 ```typescript
 // sources/stripe_pg.ts
-import { defineSource } from "@otter/core";
+import { defineSource } from "@otter-sh/core";
 
 export default defineSource({
   streams: {

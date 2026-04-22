@@ -26,19 +26,19 @@ the file relative to `process.cwd()` and uses dynamic `import(...)` to load it.
 
 ## Project Dependencies
 
-Add the sources and adapters you use to your project's `package.json` alongside `@otter/cli`:
+Add the sources and adapters you use to your project's `package.json` alongside `@otter-sh/cli`:
 
 ```json
 {
   "dependencies": {
-    "@otter/core": "^0.1.1",
-    "@otter/adapter-postgres": "^0.1.1",
-    "@otter/source-postgres": "^0.1.1",
-    "@otter/source-clickhouse": "^0.1.1",
-    "@otter/source-stripe": "^0.1.1"
+    "@otter-sh/core": "^0.1.1",
+    "@otter-sh/adapter-postgres": "^0.1.1",
+    "@otter-sh/source-postgres": "^0.1.1",
+    "@otter-sh/source-clickhouse": "^0.1.1",
+    "@otter-sh/source-stripe": "^0.1.1"
   },
   "devDependencies": {
-    "@otter/cli": "^0.1.1"
+    "@otter-sh/cli": "^0.1.1"
   }
 }
 ```
@@ -47,9 +47,9 @@ Add the sources and adapters you use to your project's `package.json` alongside 
 
 ```typescript
 // otter.config.ts
-import { postgresAdapter } from "@otter/adapter-postgres";
-import { defineConfig } from "@otter/core";
-import { postgresSource } from "@otter/source-postgres";
+import { postgresAdapter } from "@otter-sh/adapter-postgres";
+import { defineConfig } from "@otter-sh/core";
+import { postgresSource } from "@otter-sh/source-postgres";
 
 export default defineConfig({
   profiles: {
@@ -84,18 +84,18 @@ interface ProfileConfig {
 ```
 
 Profiles are selected per-command with `--profile <name>` (default `dev`). The `target` is an
-`Adapter` instance produced by a factory from an `@otter/adapter-*` package. See
+`Adapter` instance produced by a factory from an `@otter-sh/adapter-*` package. See
 [profiles.md](profiles.md).
 
 ## Sources
 
-Each entry in `sources` is a `Source` instance produced by a factory from an `@otter/source-*`
+Each entry in `sources` is a `Source` instance produced by a factory from an `@otter-sh/source-*`
 package. Factories take driver-specific options (typed per package):
 
 ```typescript
-import { postgresSource } from "@otter/source-postgres";
-import { clickhouseSource } from "@otter/source-clickhouse";
-import { stripeSource } from "@otter/source-stripe";
+import { postgresSource } from "@otter-sh/source-postgres";
+import { clickhouseSource } from "@otter-sh/source-clickhouse";
+import { stripeSource } from "@otter-sh/source-stripe";
 
 sources: {
   customers_pg: postgresSource({ url: process.env.SOURCE_PG_URL ?? "" }),
@@ -110,10 +110,10 @@ See [sources.md](sources.md) and the per-driver pages ([source-postgres.md](sour
 ## Targets
 
 Each `profiles[*].target` is an `Adapter` instance. v1 only ships `postgresAdapter` from
-`@otter/adapter-postgres`:
+`@otter-sh/adapter-postgres`:
 
 ```typescript
-import { postgresAdapter } from "@otter/adapter-postgres";
+import { postgresAdapter } from "@otter-sh/adapter-postgres";
 
 profiles: {
   dev: {
@@ -140,10 +140,10 @@ A realistic config with two profiles and two sources:
 
 ```typescript
 // otter.config.ts
-import { postgresAdapter } from "@otter/adapter-postgres";
-import { defineConfig } from "@otter/core";
-import { clickhouseSource } from "@otter/source-clickhouse";
-import { postgresSource } from "@otter/source-postgres";
+import { postgresAdapter } from "@otter-sh/adapter-postgres";
+import { defineConfig } from "@otter-sh/core";
+import { clickhouseSource } from "@otter-sh/source-clickhouse";
+import { postgresSource } from "@otter-sh/source-postgres";
 
 export default defineConfig({
   profiles: {

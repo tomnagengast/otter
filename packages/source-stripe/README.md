@@ -1,29 +1,26 @@
-# @otter/source-stripe
+# @otter-sh/source-stripe
 
 Stripe API source for [Otter](https://github.com/tomnagengast/otter). Implements the `Source`
-interface from [`@otter/core`](https://jsr.io/@otter/core). Paginates `v1/<resource>` list
-endpoints, tracks an incremental cursor on `created`, and lands top-level scalars as typed
-Postgres columns with nested objects/arrays as `jsonb`.
+interface from [`@otter-sh/core`](https://www.npmjs.com/package/@otter-sh/core). Paginates
+`v1/<resource>` list endpoints, tracks an incremental cursor on `created`, and lands top-level
+scalars as typed Postgres columns with nested objects/arrays as `jsonb`.
 
 ## Install
 
 ```bash
-# Bun
-bunx jsr add @otter/source-stripe
-
-# Deno
-deno add jsr:@otter/source-stripe
+bun add @otter-sh/source-stripe
 ```
 
-Add it to your project's `dependencies` alongside `@otter/core` and `@otter/cli`.
+Add it to your project's `dependencies` alongside `@otter-sh/core` and `@otter-sh/cli`.
+Requires Bun.
 
 ## Configuration
 
 ```typescript
 // otter.config.ts
-import { postgresAdapter } from "@otter/adapter-postgres";
-import { defineConfig } from "@otter/core";
-import { stripeSource } from "@otter/source-stripe";
+import { postgresAdapter } from "@otter-sh/adapter-postgres";
+import { defineConfig } from "@otter-sh/core";
+import { stripeSource } from "@otter-sh/source-stripe";
 
 export default defineConfig({
   profiles: { dev: { target: postgresAdapter({ url: process.env.PG_URL ?? "" }) } },
@@ -48,7 +45,7 @@ The stream name is the Stripe resource. Declare which ones to load in `sources/s
 
 ```typescript
 // sources/stripe.ts
-import { defineSource } from "@otter/core";
+import { defineSource } from "@otter-sh/core";
 
 export default defineSource({
   streams: {

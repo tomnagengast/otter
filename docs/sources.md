@@ -61,8 +61,8 @@ export interface Source {
 Sources are imported and instantiated explicitly in `otter.config.ts`:
 
 ```typescript
-import { postgresSource } from "@otter/source-postgres";
-import { stripeSource } from "@otter/source-stripe";
+import { postgresSource } from "@otter-sh/source-postgres";
+import { stripeSource } from "@otter-sh/source-stripe";
 
 export default defineConfig({
   sources: {
@@ -77,9 +77,9 @@ Each factory takes a typed options object specific to that driver; missing or ma
 surface as TypeScript errors at build time rather than runtime. Today otter ships three driver
 packages:
 
-- [source-postgres.md](source-postgres.md) — `@otter/source-postgres` exports `postgresSource`
-- [source-clickhouse.md](source-clickhouse.md) — `@otter/source-clickhouse` exports `clickhouseSource`
-- [source-stripe.md](source-stripe.md) — `@otter/source-stripe` exports `stripeSource`
+- [source-postgres.md](source-postgres.md) — `@otter-sh/source-postgres` exports `postgresSource`
+- [source-clickhouse.md](source-clickhouse.md) — `@otter-sh/source-clickhouse` exports `clickhouseSource`
+- [source-stripe.md](source-stripe.md) — `@otter-sh/source-stripe` exports `stripeSource`
 
 ## Streams and Cursors
 
@@ -98,7 +98,7 @@ See [state.md](state.md#cursors) for the on-disk schema.
    not the package name).
 2. Export a typed factory function that takes its own options interface and returns a `Source`.
    By convention, name it `<kind>Source` (e.g. `bigquerySource`).
-3. Publish the package. Users install it alongside `@otter/cli` and import the factory in their
+3. Publish the package. Users install it alongside `@otter-sh/cli` and import the factory in their
    `otter.config.ts`:
 
 ```typescript

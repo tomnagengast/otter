@@ -7,12 +7,12 @@ its adapter.
 
 Profiles are declared under `config.profiles` in `otter.config.ts`. Each key is a profile name and
 each value is a `ProfileConfig` whose only field today is `target` — an `Adapter` produced by a
-factory from an `@otter/adapter-*` package.
+factory from an `@otter-sh/adapter-*` package.
 
 ```typescript
 // otter.config.ts
-import { postgresAdapter } from "@otter/adapter-postgres";
-import { defineConfig } from "@otter/core";
+import { postgresAdapter } from "@otter-sh/adapter-postgres";
+import { defineConfig } from "@otter-sh/core";
 
 export default defineConfig({
   profiles: {
@@ -57,9 +57,9 @@ A two-profile setup for dev and production, with sources that both profiles shar
 
 ```typescript
 // otter.config.ts
-import { postgresAdapter } from "@otter/adapter-postgres";
-import { defineConfig } from "@otter/core";
-import { postgresSource } from "@otter/source-postgres";
+import { postgresAdapter } from "@otter-sh/adapter-postgres";
+import { defineConfig } from "@otter-sh/core";
+import { postgresSource } from "@otter-sh/source-postgres";
 
 export default defineConfig({
   profiles: {

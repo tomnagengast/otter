@@ -1,4 +1,4 @@
-import type { CursorState, ExtractOpts, ExtractStream, Row, Source } from "@otter/core";
+import type { CursorState, ExtractOpts, ExtractStream, Row, Source } from "@otter-sh/core";
 
 const DEFAULT_BASE_URL = "https://api.stripe.com";
 const DEFAULT_PAGE_SIZE = 100;

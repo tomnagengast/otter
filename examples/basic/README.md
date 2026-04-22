@@ -150,8 +150,8 @@ bun cli clean
 ## How loaders work
 
 1. `otter load <source>.<stream>` resolves `<source>` against `sources` in
-   `otter.config.ts`, opens the source driver (`@otter/source-postgres` or
-   `@otter/source-clickhouse`), extracts rows, and writes them to
+   `otter.config.ts`, opens the source driver (`@otter-sh/source-postgres` or
+   `@otter-sh/source-clickhouse`), extracts rows, and writes them to
    `<target.schema>.raw_<source>_<stream>` via the target adapter.
 
 2. Staging models reference raw tables with `{{ source(...) }}`:

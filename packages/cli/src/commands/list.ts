@@ -1,4 +1,4 @@
-import { type Config, discoverSeeds, loadConfig, loadSourceDefinitions } from "@otter/core";
+import { type Config, discoverSeeds, loadConfig, loadSourceDefinitions } from "@otter-sh/core";
 import { defineCommand } from "../argv.ts";
 import { readCompiledManifest } from "../manifest.ts";
 import { BULLET, DASH, SEP, theme } from "../ui.ts";

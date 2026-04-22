@@ -1,4 +1,4 @@
-import { defineSource } from "@otter/core";
+import { defineSource } from "@otter-sh/core";
 
 export default defineSource({
   streams: {

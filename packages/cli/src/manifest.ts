@@ -1,4 +1,4 @@
-import { readManifest } from "@otter/core";
+import { readManifest } from "@otter-sh/core";
 
 const compiledManifestPath = ".otter/target/manifest.json";
 

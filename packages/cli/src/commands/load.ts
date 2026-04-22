@@ -12,7 +12,7 @@ import {
   type StateStore,
   type StreamConfig,
   type WriteDisposition,
-} from "@otter/core";
+} from "@otter-sh/core";
 import { defineCommand } from "../argv.ts";
 import { count, duration, rel, SEP, status } from "../ui.ts";
 

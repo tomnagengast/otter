@@ -1,6 +1,6 @@
 # Stripe Source
 
-`@otter/source-stripe` extracts data from the Stripe REST API and feeds it to `otter load`. It
+`@otter-sh/source-stripe` extracts data from the Stripe REST API and feeds it to `otter load`. It
 uses Bun's built-in `fetch` — no `stripe` SDK dependency.
 
 ## Configuration
@@ -18,7 +18,7 @@ authenticates with a secret key passed to the factory:
 
 ```typescript
 // otter.config.ts (excerpt)
-import { stripeSource } from "@otter/source-stripe";
+import { stripeSource } from "@otter-sh/source-stripe";
 
 sources: {
   stripe: stripeSource({ apiKey: process.env.STRIPE_API_KEY }),
@@ -32,7 +32,7 @@ endpoint. Declare the resources you want under `sources/stripe.ts`:
 
 ```typescript
 // sources/stripe.ts
-import { defineSource } from "@otter/core";
+import { defineSource } from "@otter-sh/core";
 
 export default defineSource({
   streams: {
@@ -90,9 +90,9 @@ otter load stripe.charges
 
 ```typescript
 // otter.config.ts
-import { postgresAdapter } from "@otter/adapter-postgres";
-import { defineConfig } from "@otter/core";
-import { stripeSource } from "@otter/source-stripe";
+import { postgresAdapter } from "@otter-sh/adapter-postgres";
+import { defineConfig } from "@otter-sh/core";
+import { stripeSource } from "@otter-sh/source-stripe";
 
 export default defineConfig({
   profiles: { dev: { target: postgresAdapter({ url: process.env.PG_URL ?? "" }) } },

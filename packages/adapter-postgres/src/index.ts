@@ -1,5 +1,5 @@
-import type { Adapter, LoadStrategy, MergeIncrementalOpts, Row, TableRef } from "@otter/core";
-import { NotSupportedError } from "@otter/core";
+import type { Adapter, LoadStrategy, MergeIncrementalOpts, Row, TableRef } from "@otter-sh/core";
+import { NotSupportedError } from "@otter-sh/core";
 import { SQL } from "bun";
 import { qualify, quote } from "./identifiers.ts";
 

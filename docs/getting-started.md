@@ -31,12 +31,12 @@ Add the packages your project needs as dependencies in `package.json`:
 ```json
 {
   "dependencies": {
-    "@otter/core": "^0.1.1",
-    "@otter/adapter-postgres": "^0.1.1",
-    "@otter/source-postgres": "^0.1.1"
+    "@otter-sh/core": "^0.1.1",
+    "@otter-sh/adapter-postgres": "^0.1.1",
+    "@otter-sh/source-postgres": "^0.1.1"
   },
   "devDependencies": {
-    "@otter/cli": "^0.1.1"
+    "@otter-sh/cli": "^0.1.1"
   }
 }
 ```
@@ -45,9 +45,9 @@ Then write your config by importing the factories you need:
 
 ```typescript
 // otter.config.ts
-import { postgresAdapter } from "@otter/adapter-postgres";
-import { defineConfig } from "@otter/core";
-import { postgresSource } from "@otter/source-postgres";
+import { postgresAdapter } from "@otter-sh/adapter-postgres";
+import { defineConfig } from "@otter-sh/core";
+import { postgresSource } from "@otter-sh/source-postgres";
 
 export default defineConfig({
   profiles: {

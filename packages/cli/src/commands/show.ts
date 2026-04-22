@@ -1,4 +1,4 @@
-import { loadConfig } from "@otter/core";
+import { loadConfig } from "@otter-sh/core";
 import { defineCommand } from "../argv.ts";
 import { readCompiledManifest } from "../manifest.ts";
 import { theme } from "../ui.ts";

@@ -1,6 +1,6 @@
 # Postgres Source
 
-`@otter/source-postgres` extracts rows from a Postgres database and feeds them to `otter load`. It
+`@otter-sh/source-postgres` extracts rows from a Postgres database and feeds them to `otter load`. It
 uses `Bun.sql` — no `pg` or `postgres.js` dependency.
 
 ## Configuration
@@ -13,7 +13,7 @@ Import `postgresSource` and declare the source under `sources` in `otter.config.
 
 ```typescript
 // otter.config.ts (excerpt)
-import { postgresSource } from "@otter/source-postgres";
+import { postgresSource } from "@otter-sh/source-postgres";
 
 sources: {
   stripe_pg: postgresSource({ url: process.env.STRIPE_PG_URL ?? "" }),
@@ -46,7 +46,7 @@ Declare an incremental cursor per stream in `sources/<name>.ts`:
 
 ```typescript
 // sources/stripe_pg.ts
-import { defineSource } from "@otter/core";
+import { defineSource } from "@otter-sh/core";
 
 export default defineSource({
   streams: {
@@ -68,9 +68,9 @@ Pass `--full-refresh` to `otter load` to clear the cursor before extract. See
 
 ```typescript
 // otter.config.ts
-import { postgresAdapter } from "@otter/adapter-postgres";
-import { defineConfig } from "@otter/core";
-import { postgresSource } from "@otter/source-postgres";
+import { postgresAdapter } from "@otter-sh/adapter-postgres";
+import { defineConfig } from "@otter-sh/core";
+import { postgresSource } from "@otter-sh/source-postgres";
 
 export default defineConfig({
   profiles: { dev: { target: postgresAdapter({ url: process.env.PG_URL ?? "" }) } },

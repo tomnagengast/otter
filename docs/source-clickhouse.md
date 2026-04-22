@@ -1,6 +1,6 @@
 # ClickHouse Source
 
-`@otter/source-clickhouse` extracts rows from a ClickHouse database via the HTTP interface using
+`@otter-sh/source-clickhouse` extracts rows from a ClickHouse database via the HTTP interface using
 `FORMAT JSONEachRow`. No native ClickHouse client dependency — the driver streams over `fetch`.
 
 ## Configuration
@@ -13,7 +13,7 @@ Import `clickhouseSource` and declare the source under `sources` in `otter.confi
 
 ```typescript
 // otter.config.ts (excerpt)
-import { clickhouseSource } from "@otter/source-clickhouse";
+import { clickhouseSource } from "@otter-sh/source-clickhouse";
 
 sources: {
   events_ch: clickhouseSource({
@@ -62,7 +62,7 @@ response is written back to `.otter/state.db` after the stream drains. Pass `--f
 
 ```typescript
 // sources/events_ch.ts
-import { defineSource } from "@otter/core";
+import { defineSource } from "@otter-sh/core";
 
 export default defineSource({
   streams: {
@@ -81,9 +81,9 @@ See [models.md](models.md#model-api) for incremental model config and
 
 ```typescript
 // otter.config.ts
-import { postgresAdapter } from "@otter/adapter-postgres";
-import { defineConfig } from "@otter/core";
-import { clickhouseSource } from "@otter/source-clickhouse";
+import { postgresAdapter } from "@otter-sh/adapter-postgres";
+import { defineConfig } from "@otter-sh/core";
+import { clickhouseSource } from "@otter-sh/source-clickhouse";
 
 export default defineConfig({
   profiles: { dev: { target: postgresAdapter({ url: process.env.PG_URL ?? "" }) } },

@@ -35,8 +35,8 @@ Three event types are emitted today:
 Use `OtterEmitter` directly if you drive `runBuild` yourself:
 
 ```typescript
-import { postgresAdapter } from "@otter/adapter-postgres";
-import { readManifest, runBuild } from "@otter/core";
+import { postgresAdapter } from "@otter-sh/adapter-postgres";
+import { readManifest, runBuild } from "@otter-sh/core";
 
 const adapter = postgresAdapter({ url: "postgres://…", schema: "analytics" });
 const manifest = await readManifest(".otter/target/manifest.json");
@@ -57,7 +57,7 @@ emitter.onNode((e) => {
 when called:
 
 ```typescript
-import { jsonlAppender, OtterEmitter } from "@otter/core";
+import { jsonlAppender, OtterEmitter } from "@otter-sh/core";
 
 const emitter = new OtterEmitter();
 const flush = jsonlAppender(".otter/target/events.jsonl", emitter);

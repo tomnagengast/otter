@@ -66,7 +66,7 @@ export interface Adapter {
 Adapters are imported and instantiated explicitly in `otter.config.ts`:
 
 ```typescript
-import { postgresAdapter } from "@otter/adapter-postgres";
+import { postgresAdapter } from "@otter-sh/adapter-postgres";
 
 export default defineConfig({
   profiles: {

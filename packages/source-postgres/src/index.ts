@@ -1,4 +1,4 @@
-import type { CursorState, ExtractOpts, ExtractStream, Row, Source } from "@otter/core";
+import type { CursorState, ExtractOpts, ExtractStream, Row, Source } from "@otter-sh/core";
 import { SQL } from "bun";
 
 const BATCH = 5000;

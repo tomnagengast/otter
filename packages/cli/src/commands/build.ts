@@ -12,7 +12,7 @@ import {
   runModelTests,
   writeCompiledSql,
   writeManifest,
-} from "@otter/core";
+} from "@otter-sh/core";
 import { defineCommand } from "../argv.ts";
 import { count, duration, rel, SEP, status, theme } from "../ui.ts";
 

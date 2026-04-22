@@ -1,4 +1,4 @@
-import { compileProject, loadConfig, writeCompiledSql, writeManifest } from "@otter/core";
+import { compileProject, loadConfig, writeCompiledSql, writeManifest } from "@otter-sh/core";
 import { defineCommand } from "../argv.ts";
 import { count, theme } from "../ui.ts";
 

@@ -1,4 +1,4 @@
-import type { Row, Source } from "@otter/core";
+import type { Row, Source } from "@otter-sh/core";
 
 export interface ClickhouseSourceOptions {
   /** ClickHouse HTTP URL (may include username:password@). */

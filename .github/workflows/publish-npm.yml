@@ -1,11 +1,9 @@
 name: Publish to npm
 
-# Disabled for now — run manually via "Run workflow" once ready.
-# To enable automatic publishing on merge to main, add:
-#   push:
-#     branches: [main]
 on:
   workflow_dispatch:
+  push:
+    tags: ["v*"]
 
 concurrency:
   group: publish-npm
@@ -41,5 +39,3 @@ jobs:
 
       - name: Publish all workspace packages
         run: npm publish --workspaces --access public --provenance
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

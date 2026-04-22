@@ -1,8 +1,8 @@
-import { postgresAdapter } from "@otter/adapter-postgres";
-import { defineConfig } from "@otter/core";
-import { clickhouseSource } from "@otter/source-clickhouse";
-import { postgresSource } from "@otter/source-postgres";
-import { stripeSource } from "@otter/source-stripe";
+import { postgresAdapter } from "@otter-sh/adapter-postgres";
+import { defineConfig } from "@otter-sh/core";
+import { clickhouseSource } from "@otter-sh/source-clickhouse";
+import { postgresSource } from "@otter-sh/source-postgres";
+import { stripeSource } from "@otter-sh/source-stripe";
 
 export default defineConfig({
   profiles: {

@@ -1,4 +1,4 @@
-# @otter/cli
+# @otter-sh/cli
 
 The `otter` CLI — a Bun-native ELT tool for extracting from sources, loading into Postgres, and
 running `.sql` models as a DAG. Think "dbt-shaped workflow, no Python, no Jinja runtime, no
@@ -9,14 +9,10 @@ Six commands: `load`, `compile`, `build`, `list`, `show`, `clean`.
 ## Install
 
 ```bash
-# Bun
-bunx jsr add @otter/cli
-
-# Deno
-deno add jsr:@otter/cli
+bun add -D @otter-sh/cli
 ```
 
-Run the CLI via Bun:
+Run the CLI:
 
 ```bash
 bun x otter --help
@@ -24,22 +20,24 @@ bun x otter --help
 otter --help
 ```
 
-`@otter/cli` pulls in [`@otter/core`](https://jsr.io/@otter/core) and dynamically imports
-`@otter/adapter-<kind>` / `@otter/source-<kind>` packages based on your `otter.config.ts`, so
-add the adapter and sources you actually use:
+`@otter-sh/cli` pulls in [`@otter-sh/core`](https://www.npmjs.com/package/@otter-sh/core) and
+dynamically imports `@otter-sh/adapter-<kind>` / `@otter-sh/source-<kind>` packages based on your
+`otter.config.ts`, so add the adapter and sources you actually use:
 
 ```bash
-bunx jsr add @otter/adapter-postgres
-bunx jsr add @otter/source-postgres    # or source-clickhouse / source-stripe
+bun add @otter-sh/adapter-postgres
+bun add @otter-sh/source-postgres    # or source-clickhouse / source-stripe
 ```
+
+Requires Bun — the packages import `"bun"` and `"bun:sqlite"` at runtime.
 
 ## Quickstart
 
 ```typescript
 // otter.config.ts
-import { postgresAdapter } from "@otter/adapter-postgres";
-import { defineConfig } from "@otter/core";
-import { postgresSource } from "@otter/source-postgres";
+import { postgresAdapter } from "@otter-sh/adapter-postgres";
+import { defineConfig } from "@otter-sh/core";
+import { postgresSource } from "@otter-sh/source-postgres";
 
 export default defineConfig({
   profiles: {

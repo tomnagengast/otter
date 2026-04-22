@@ -46,11 +46,11 @@ While otter is distributed via Bun workspace, add it to `$PATH` with `bun link`:
 ```bash
 cd packages/cli
 bun link           # inside the CLI package
-bun link @otter/cli   # inside any consumer project (optional)
+bun link @otter-sh/cli   # inside any consumer project (optional)
 otter --version
 ```
 
-After publishing to npm, `bunx @otter/cli` or a global `bun add -g` will work without a
+After publishing to npm, `bunx @otter-sh/cli` or a global `bun add -g` will work without a
 workspace.
 
 Related: [profiles.md](profiles.md), [source-postgres.md](source-postgres.md),

@@ -1,8 +1,8 @@
-# @otter/source-postgres
+# @otter-sh/source-postgres
 
 Postgres source for [Otter](https://github.com/tomnagengast/otter). Implements the `Source`
-interface from [`@otter/core`](https://jsr.io/@otter/core) using `Bun.sql` —
-**no `pg` or `postgres.js` dependency**. Extracts rows in paginated batches of 5 000.
+interface from [`@otter-sh/core`](https://www.npmjs.com/package/@otter-sh/core) using `Bun.sql`
+— **no `pg` or `postgres.js` dependency**. Extracts rows in paginated batches of 5 000.
 
 Reads column types from `information_schema.columns` up front so the target `CREATE TABLE` uses
 real Postgres types instead of `text`.
@@ -10,23 +10,20 @@ real Postgres types instead of `text`.
 ## Install
 
 ```bash
-# Bun
-bunx jsr add @otter/source-postgres
-
-# Deno
-deno add jsr:@otter/source-postgres
+bun add @otter-sh/source-postgres
 ```
 
-Add it to your project's `dependencies` alongside `@otter/core` and `@otter/cli`.
+Add it to your project's `dependencies` alongside `@otter-sh/core` and `@otter-sh/cli`.
+Requires Bun.
 
 ## Configuration
 
 Import `postgresSource` and declare the source under `sources` in `otter.config.ts`:
 
 ```typescript
-import { postgresAdapter } from "@otter/adapter-postgres";
-import { defineConfig } from "@otter/core";
-import { postgresSource } from "@otter/source-postgres";
+import { postgresAdapter } from "@otter-sh/adapter-postgres";
+import { defineConfig } from "@otter-sh/core";
+import { postgresSource } from "@otter-sh/source-postgres";
 
 export default defineConfig({
   profiles: { dev: { target: postgresAdapter({ url: process.env.PG_URL ?? "" }) } },
@@ -67,7 +64,7 @@ Declare an incremental cursor per stream in `sources/<name>.ts`:
 
 ```typescript
 // sources/stripe_pg.ts
-import { defineSource } from "@otter/core";
+import { defineSource } from "@otter-sh/core";
 
 export default defineSource({
   streams: {

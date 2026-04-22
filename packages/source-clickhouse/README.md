@@ -1,30 +1,27 @@
-# @otter/source-clickhouse
+# @otter-sh/source-clickhouse
 
 ClickHouse source for [Otter](https://github.com/tomnagengast/otter). Implements the `Source`
-interface from [`@otter/core`](https://jsr.io/@otter/core) over the ClickHouse HTTP interface
-using `FORMAT JSONEachRow` — **no native ClickHouse client dependency**. Streams rows via
-`fetch` in batches of 5 000.
+interface from [`@otter-sh/core`](https://www.npmjs.com/package/@otter-sh/core) over the
+ClickHouse HTTP interface using `FORMAT JSONEachRow` — **no native ClickHouse client
+dependency**. Streams rows via `fetch` in batches of 5 000.
 
 ## Install
 
 ```bash
-# Bun
-bunx jsr add @otter/source-clickhouse
-
-# Deno
-deno add jsr:@otter/source-clickhouse
+bun add @otter-sh/source-clickhouse
 ```
 
-Add it to your project's `dependencies` alongside `@otter/core` and `@otter/cli`.
+Add it to your project's `dependencies` alongside `@otter-sh/core` and `@otter-sh/cli`.
+Requires Bun.
 
 ## Configuration
 
 Import `clickhouseSource` and declare the source under `sources` in `otter.config.ts`:
 
 ```typescript
-import { postgresAdapter } from "@otter/adapter-postgres";
-import { defineConfig } from "@otter/core";
-import { clickhouseSource } from "@otter/source-clickhouse";
+import { postgresAdapter } from "@otter-sh/adapter-postgres";
+import { defineConfig } from "@otter-sh/core";
+import { clickhouseSource } from "@otter-sh/source-clickhouse";
 
 export default defineConfig({
   profiles: { dev: { target: postgresAdapter({ url: process.env.PG_URL ?? "" }) } },
@@ -75,7 +72,7 @@ Declare a cursor per stream in `sources/<name>.ts`:
 
 ```typescript
 // sources/events_ch.ts
-import { defineSource } from "@otter/core";
+import { defineSource } from "@otter-sh/core";
 
 export default defineSource({
   streams: {

@@ -1,8 +1,8 @@
-# @otter/adapter-postgres
+# @otter-sh/adapter-postgres
 
 Postgres target adapter for [Otter](https://github.com/tomnagengast/otter). Implements the
-`Adapter` interface from [`@otter/core`](https://jsr.io/@otter/core) using `Bun.sql` —
-**no `pg` or `postgres.js` dependency**.
+`Adapter` interface from [`@otter-sh/core`](https://www.npmjs.com/package/@otter-sh/core) using
+`Bun.sql` — **no `pg` or `postgres.js` dependency**.
 
 Responsible for: schema creation, bulk loads from `otter load`, `view` / `table` /
 `incremental` materializations for `otter build`, and the atomic staging-table swap used by
@@ -11,22 +11,19 @@ Responsible for: schema creation, bulk loads from `otter load`, `view` / `table`
 ## Install
 
 ```bash
-# Bun
-bunx jsr add @otter/adapter-postgres
-
-# Deno
-deno add jsr:@otter/adapter-postgres
+bun add @otter-sh/adapter-postgres
 ```
 
-Add it to your project's `dependencies` alongside `@otter/core` and `@otter/cli`.
+Add it to your project's `dependencies` alongside `@otter-sh/core` and `@otter-sh/cli`.
+Requires Bun.
 
 ## Configuration
 
 Import `postgresAdapter` and call it inside `otter.config.ts`:
 
 ```typescript
-import { postgresAdapter } from "@otter/adapter-postgres";
-import { defineConfig } from "@otter/core";
+import { postgresAdapter } from "@otter-sh/adapter-postgres";
+import { defineConfig } from "@otter-sh/core";
 
 export default defineConfig({
   profiles: {
@@ -82,7 +79,7 @@ Schema-qualified names are produced at execution time using the configured schem
 For tests or custom runners:
 
 ```typescript
-import { postgresAdapter } from "@otter/adapter-postgres";
+import { postgresAdapter } from "@otter-sh/adapter-postgres";
 
 const adapter = postgresAdapter({
   url: process.env.PG_URL!,

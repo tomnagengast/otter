@@ -1,6 +1,6 @@
 # Postgres Adapter
 
-`@otter/adapter-postgres` is the target adapter otter uses to materialize models and land raw
+`@otter-sh/adapter-postgres` is the target adapter otter uses to materialize models and land raw
 tables from `otter load`. It uses `Bun.sql` under the hood — no `pg` or `postgres.js` dependency.
 
 ## Configuration
@@ -52,8 +52,8 @@ configured schema.
 
 ```typescript
 // otter.config.ts
-import { postgresAdapter } from "@otter/adapter-postgres";
-import { defineConfig } from "@otter/core";
+import { postgresAdapter } from "@otter-sh/adapter-postgres";
+import { defineConfig } from "@otter-sh/core";
 
 export default defineConfig({
   profiles: {
