@@ -15,8 +15,15 @@ export async function compileProject(config: Config, cwd: string): Promise<Manif
   for await (const f of glob.scan(`${cwd}/${config.modelsDir}`)) files.push(f);
 
   const nodes: DagNode[] = [];
+  const seen = new Map<string, string>();
   for (const f of files) {
-    const id = f.replace(/\.sql\.ts$/, "").replaceAll("/", "_");
+    const base = f.split("/").pop() ?? f;
+    const id = base.replace(/\.sql\.ts$/, "");
+    const prior = seen.get(id);
+    if (prior !== undefined) {
+      throw new Error(`duplicate model id "${id}": ${prior} and ${f}`);
+    }
+    seen.set(id, f);
     const ctx = {
       deps: new Set<string>(),
       sources: new Set<string>(),

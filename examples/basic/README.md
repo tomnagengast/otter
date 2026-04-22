@@ -26,13 +26,13 @@ into a unified analytics database, with staging models and a combined activity v
 │ analytics schema (same db)                                                     │
 ├────────────────────────────────────────────────────────────────────────────────┤
 │ staging/                                                                       │
-│   staging_stg_postgres_customers (view)                                        │
-│   staging_stg_postgres_orders (view)                                           │
-│   staging_stg_clickhouse_events (view)                                         │
+│   stg_postgres_customers (view)                                                │
+│   stg_postgres_orders (view)                                                   │
+│   stg_clickhouse_events (view)                                                 │
 │                                                                                │
 │ models/                                                                        │
-│   customers (table)             ← refs staging_stg_postgres_customers          │
-│   customer_order_counts (view)  ← refs customers + staging_stg_postgres_orders │
+│   customers (table)             ← refs stg_postgres_customers                  │
+│   customer_order_counts (view)  ← refs customers + stg_postgres_orders         │
 │   customer_activity (table)     ← refs customers + orders + events             │
 └────────────────────────────────────────────────────────────────────────────────┘
 ```
@@ -63,7 +63,7 @@ examples/basic/
 From the repo root:
 
 ```bash
-docker compose -f docker-compose.test.yml up -d
+bun test:up
 ```
 
 This starts three services:
@@ -165,19 +165,19 @@ bun cli clean
    target schema during `execute`, so the unqualified identifier resolves to
    `analytics.raw_postgres_customers`.
 
-3. Downstream models reference compiled models with `ref()`. Because models
-   live in subdirectories, their IDs are path-prefixed with `_`:
+3. Downstream models reference compiled models with `ref()`. Model IDs are the
+   filename without the `.sql.ts` extension — subdirectories under `models/` are
+   for organization and don't affect the ID:
 
    ```ts
    // models/staging/stg_postgres_customers.sql.ts
-   // → id: staging_stg_postgres_customers
+   // → id: stg_postgres_customers
 
-   ref("staging_stg_postgres_customers");
+   ref("stg_postgres_customers");
    ```
 
-4. `customer_activity` fans in `staging_stg_postgres_orders` and
-   `staging_stg_clickhouse_events` and joins them onto `customers` to produce a
-   single denormalized table.
+4. `customer_activity` fans in `stg_postgres_orders` and `stg_clickhouse_events`
+   and joins them onto `customers` to produce a single denormalized table.
 
 ## Load strategies
 

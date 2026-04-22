@@ -3,6 +3,7 @@ import {
   jsonlAppender,
   loadConfig,
   loadSeeds,
+  OtterEmitter,
   resolveAdapter,
   runBuild,
 } from "@otter/core";
@@ -46,16 +47,31 @@ export const buildCommand = defineCommand({
     }
     if (!manifest) throw new Error("internal error: build manifest missing");
 
-    const { results, emitter } = await runBuild({
-      manifest,
-      adapter,
-      selector: values.select as string | undefined,
-      schema,
-    });
+    const emitter = new OtterEmitter();
     const flush = jsonlAppender(`${cwd}/.otter/target/events.jsonl`, emitter);
-    await Bun.write(`${cwd}/.otter/target/run_results.json`, JSON.stringify(results, null, 2));
-    await flush();
-    await adapter.close();
-    return Object.values(results.nodes).some((r) => r.status === "error") ? 1 : 0;
+    emitter.onNode((e) => {
+      if (e.type === "node.start") {
+        console.log(`building ${schema}.${e.id}`);
+      } else if (e.type === "node.finish") {
+        console.log(`built ${schema}.${e.id} (${Math.round(e.duration_ms ?? 0)}ms)`);
+      } else if (e.type === "node.error") {
+        console.log(`failed ${schema}.${e.id}: ${e.error}`);
+      }
+    });
+
+    try {
+      const { results } = await runBuild({
+        manifest,
+        adapter,
+        selector: values.select as string | undefined,
+        schema,
+        emitter,
+      });
+      await Bun.write(`${cwd}/.otter/target/run_results.json`, JSON.stringify(results, null, 2));
+      return Object.values(results.nodes).some((r) => r.status === "error") ? 1 : 0;
+    } finally {
+      await flush();
+      await adapter.close();
+    }
   },
 });

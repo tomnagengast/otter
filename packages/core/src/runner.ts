@@ -10,6 +10,7 @@ export interface RunBuildOpts {
   adapter: Adapter;
   selector?: string;
   schema: string;
+  emitter?: OtterEmitter;
 }
 
 export interface RunResults {
@@ -20,7 +21,7 @@ export async function runBuild(opts: RunBuildOpts): Promise<{
   results: RunResults;
   emitter: OtterEmitter;
 }> {
-  const emitter = new OtterEmitter();
+  const emitter = opts.emitter ?? new OtterEmitter();
   const dag = buildDag(Object.values(opts.manifest.nodes));
   const order = toposort(dag);
   const included = opts.selector ? evaluate(parseSelector(opts.selector), dag) : new Set(order);

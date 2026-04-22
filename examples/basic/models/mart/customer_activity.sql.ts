@@ -9,7 +9,7 @@ with customer_orders as (
     count(*) as order_count,
     sum(amount) as total_spent,
     max(created_at) as last_order_at
-  from ${ref("staging_stg_postgres_orders")}
+  from ${ref("stg_postgres_orders")}
   group by customer_id
 ),
 customer_events as (
@@ -20,7 +20,7 @@ customer_events as (
     count(*) filter (where event_type = 'click') as clicks,
     count(*) filter (where event_type = 'purchase') as purchases,
     max(created_at) as last_event_at
-  from ${ref("staging_stg_clickhouse_events")}
+  from ${ref("stg_clickhouse_events")}
   group by user_id
 )
 select

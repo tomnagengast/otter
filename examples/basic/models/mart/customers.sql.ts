@@ -8,5 +8,5 @@ select
   name,
   email,
   created_at
-from ${ref("staging_stg_postgres_customers")}
+from ${ref("stg_postgres_customers")}
 `;
