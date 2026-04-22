@@ -1,0 +1,13 @@
+[tools]
+bun = "latest"
+cmake = "4.3.0"
+node = "latest"
+rust = "stable"
+terraform = "latest"
+uv = "latest"
+
+[env]
+_.file = [".env.local", ".env.development"]
+
+[shell_alias]
+bun = "bun --elide-lines=0"

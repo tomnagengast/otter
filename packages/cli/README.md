@@ -1,15 +1,9 @@
-# packages
+# @otter/cli
 
-To install dependencies:
+The `otter` CLI binary. Six commands: `load`, `compile`, `build`, `list`, `show`, `clean`.
 
-```bash
-bun install
-```
+See [../../docs/cli.md](../../docs/cli.md) for full documentation.
 
-To run:
+## Install
 
-```bash
-bun run index.ts
-```
-
-This project was created using `bun init` in bun v1.3.11. [Bun](https://bun.com) is a fast all-in-one JavaScript runtime.
+Currently distributed via Bun workspace. See [../../docs/packages.md](../../docs/packages.md).

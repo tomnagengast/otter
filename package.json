@@ -16,6 +16,14 @@
     "format:md": "prettier --write .",
     "lint": "biome lint",
     "lint:fix": "biome lint --write",
+    "docs:check": "bun scripts/check-docs.ts",
+    "typecheck": "tsgo --noEmit",
+    "test": "bun test",
+    "test:up": "docker compose -f docker-compose.test.yml up -d",
+    "test:down": "docker compose -f docker-compose.test.yml down -v",
+    "test:reset": "bun test:down && bun test:up",
+    "test:e2e": "PG_TEST_URL=postgres://postgres:otter@localhost:55432/postgres CLICKHOUSE_TEST_URL=http://otter:otter@localhost:58123 bun test",
+    "ci": "bun run check && bun run typecheck && bun run test && bun run docs:check",
     "hooks": "prek run --all-files",
     "clean": "rm -rf {,packages/*/}{dist,out,coverage,*.tsbuildinfo}",
     "clean:deps": "rm -rf {,packages/*/}node_modules"
@@ -23,7 +31,12 @@
   "peerDependencies": {
     "typescript": "^5"
   },
-  "dependencies": {},
+  "dependencies": {
+    "@otter/adapter-postgres": "workspace:*",
+    "@otter/source-clickhouse": "workspace:*",
+    "@otter/source-postgres": "workspace:*",
+    "@otter/source-stripe": "workspace:*"
+  },
   "devDependencies": {
     "@biomejs/biome": "^2.4.12",
     "@j178/prek": "^0.3.10",
